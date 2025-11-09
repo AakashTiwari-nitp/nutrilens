@@ -76,6 +76,12 @@ export const registerProduct = asyncHandler(async (req, res, next) => {
         throw new ApiError(500, "Something went wrong while creating product");
     }
 
+    await User.findByIdAndUpdate(
+        user._id,
+        { $push: { products: createdProduct._id } },
+        { new: true }
+    );
+
     return res.status(201).json(
         new ApiResponse(
             201,

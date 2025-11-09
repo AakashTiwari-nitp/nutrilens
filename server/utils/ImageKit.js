@@ -9,7 +9,33 @@ const imagekit = new ImageKit({
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
 });
 
-const uploadOnImageKit = async (localFilePath, userName) => {
+const getFileIdFromUrl = (url) => {
+    if (!url) return null;
+    // Extract fileId from URL: https://ik.imagekit.io/your_id/path/fileId_timestamp.ext
+    const matches = url.match(/\/([^\/]+)_\d+\.\w+$/);
+    return matches ? matches[1] : null;
+};
+
+// Delete file from ImageKit
+const deleteFromImageKit = async (fileId) => {
+    try {
+        if (!fileId) return { error: true, message: "No fileId provided" };
+
+        await imagekit.deleteFile(fileId);
+        
+        return {
+            error: false,
+            message: "File deleted successfully"
+        };
+    } catch (error) {
+        return {
+            error: true,
+            message: error.message || "Error deleting file from ImageKit"
+        };
+    }
+};
+
+const uploadAvatarOnImageKit = async (localFilePath, userName) => {
     try {
         if (!localFilePath) return null;
 
@@ -88,4 +114,4 @@ const uploadProductOnImageKit = async (localFilePath, productId) => {
     }
 }
 
-export { uploadOnImageKit, uploadProductOnImageKit };
+export { uploadAvatarOnImageKit, uploadProductOnImageKit, deleteFromImageKit, getFileIdFromUrl };
