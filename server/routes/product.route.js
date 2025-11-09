@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getProductById, registerProduct } from "../controllers/product.controller.js";
+import { getAllProducts, getProductById, registerProduct } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -10,6 +10,8 @@ router.route("/register").post(
     upload.single("productImage"),
     registerProduct
 );
+
+router.get("/get-products", getAllProducts);
 
 router.route("/:id").post(getProductById);
 export default router;

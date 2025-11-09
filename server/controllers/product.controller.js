@@ -34,7 +34,7 @@ export const registerProduct = asyncHandler(async (req, res, next) => {
     }
 
     console.log(`Registering product with ID: ${productId}`);
-    const existedProduct = await Product.findOne({productId: productId});
+    const existedProduct = await Product.findOne({ productId: productId });
 
     if (existedProduct) {
         throw new ApiError(409, "Product with this ID already exists");
@@ -89,6 +89,20 @@ export const registerProduct = asyncHandler(async (req, res, next) => {
                 createdProduct,
             },
             "Product registered successfully"
+        )
+    );
+});
+
+export const getAllProducts = asyncHandler(async (req, res, next) => {
+    const products = await Product.find().select('-nutritionalInfo -ingredients -createdAt -updatedAt -__v -certifications -alternatives -diseases');
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                products,
+            },
+            "Products fetched successfully"
         )
     );
 });
