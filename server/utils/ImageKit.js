@@ -15,10 +15,10 @@ const getFileIdFromUrl = async (url) => {
 
         // Extract the file path from the full URL
         const base = process.env.IMAGEKIT_URL_ENDPOINT;
-        
+
         // Remove the base URL to get just the file path
         const filePath = url.replace(base, '');
-        
+
         // console.log("Original URL:", url);
         // console.log("File Path:", filePath);
 
@@ -139,4 +139,39 @@ const uploadProductOnImageKit = async (localFilePath, productId) => {
     }
 }
 
-export { uploadAvatarOnImageKit, uploadProductOnImageKit, deleteFromImageKit, getFileIdFromUrl };
+const uploadNewsImageOnImageKit = async (localFilePath) => {
+    try {
+        if (!localFilePath) return null;
+
+        // Read file and convert to base64
+        const fileBuffer = fs.readFileSync(localFilePath);
+        const base64File = fileBuffer.toString('base64');
+
+        const response = await imagekit.upload({
+            file: base64File,
+            fileName: `news_${Date.now()}`,
+            folder: '/news'
+        });
+
+        // Delete local file after successful upload
+        fs.unlinkSync(localFilePath);
+
+        return {
+            error: false,
+            url: response.url,
+            fileId: response.fileId
+        };
+
+    } catch (error) {
+        // Delete local file even if upload fails
+        if (fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath);
+        }
+        return {
+            error: true,
+            message: error.message || "Error uploading image to ImageKit"
+        };
+    }
+}
+
+export { uploadAvatarOnImageKit, uploadProductOnImageKit, deleteFromImageKit, getFileIdFromUrl, uploadNewsImageOnImageKit };

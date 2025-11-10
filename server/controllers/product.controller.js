@@ -4,7 +4,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { Product } from "../models/product.model.js";
 import { User } from "../models/user.model.js";
 import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from "../utils/ImageKit.js";
-import { getUserDetailsById } from "./user.controller.js";
+import { getUserById, getUserDetailsById } from "./user.controller.js";
 
 export const getProductById = asyncHandler(async (req, res, next) => {
     console.log("Fetching product by ID", req.params.productId);
@@ -52,7 +52,7 @@ export const registerProduct = asyncHandler(async (req, res, next) => {
         throw new ApiError(403, "Only approved companies can register products");
     }
 
-    console.log(`Registering product with ID: ${productId}`);
+    // console.log(`Registering product with ID: ${productId}`);
     const existedProduct = await Product.findOne({ productId: productId });
 
     if (existedProduct) {
@@ -129,7 +129,7 @@ export const getAllProducts = asyncHandler(async (req, res, next) => {
 export const updateProductImage = asyncHandler(async (req, res, next) => {
     const { productId } = req.params;
 
-    const user = req.user;
+    const user = await getUserDetailsById(req.user?._id);
 
     if (user.role !== 'company' || user.accountStatus !== 'approved') {
         throw new ApiError(403, "Only approved companies can update product images");
