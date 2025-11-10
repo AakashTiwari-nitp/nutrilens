@@ -98,7 +98,7 @@ export default function CategoryPage() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Category Sidebar - Keep this one */}
-      <div className="hidden md:flex w-64 flex-col fixed h-screen bg-white shadow-lg">
+      <div className="hidden md:flex w-64 flex-col fixed h-screen bg-white shadow-lg overflow-y-auto">
         <div className="p-6">
           <h2 className="text-xl font-bold mb-4">Categories</h2>
           <div className="space-y-2">
@@ -108,7 +108,7 @@ export default function CategoryPage() {
                 href={`/category/${cat.value}`}
                 className={`block p-2 rounded-lg transition-colors ${
                   selectedCategory === cat.value
-                    ? "bg-blue-100 text-blue-700"
+                    ? "bg-blue-100 text-black"
                     : "hover:bg-gray-100"
                 }`}
               >
@@ -127,7 +127,7 @@ export default function CategoryPage() {
 
         {loading && (
           <div className="flex justify-center items-center min-h-[200px]">
-            <div className="text-blue-600 text-lg">Loading products...</div>
+            <div className="text-black text-lg">Loading products...</div>
           </div>
         )}
 
@@ -137,12 +137,6 @@ export default function CategoryPage() {
             <p>{error}</p>
           </div>
         )}
-
-        <div className="bg-blue-50 border border-blue-200 text-blue-600 p-4 rounded-lg mb-4">
-          <p className="font-semibold">Debug Info:</p>
-          <p>Current Category: {selectedCategory}</p>
-          <p>Total Items: {items.length}</p>
-        </div>
 
         {!loading && !error && items.length === 0 && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-600 p-4 rounded-lg">
@@ -170,22 +164,12 @@ export default function CategoryPage() {
                   <h3 className="text-lg font-semibold mb-2">{item.name}</h3>
                   <p className="text-gray-600 mb-2">{item.description}</p>
                   <div className="mt-2 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Product ID:</span>
-                      <span className="font-medium">{item.productId}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Expiry:</span>
-                      <span className="font-medium">
-                        {new Date(item.expiryDate).toLocaleDateString()}
-                      </span>
-                    </div>
                     {item.tags && item.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {item.tags.map((tag, index) => (
                           <span
                             key={index}
-                            className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                            className="bg-blue-100 text-black text-xs px-2 py-1 rounded-full"
                           >
                             {tag}
                           </span>
@@ -195,16 +179,16 @@ export default function CategoryPage() {
                   </div>
                   <div className="flex justify-between items-center mt-4">
                     <div>
-                      <span className="text-lg font-bold text-blue-600">
+                      <span className="text-lg font-bold text-black">
                         ₹{item.price}
                       </span>
-                      {item.publicRating > 0 && (
+                      {/* {item.publicRating > 0 && (
                         <div className="text-sm text-yellow-500">
                           Rating: {item.publicRating}⭐
                         </div>
-                      )}
+                      )} */}
                     </div>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                       View Details
                     </button>
                   </div>

@@ -134,26 +134,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Categories Grid - Updated Layout */}
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Browse Categories</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-          {categories.map((cat, index) => (
-            <div
-              key={index}
-              onClick={() => handleCategoryClick(cat.value)}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer"
-            >
-              <div className="relative w-full h-48">
-                <Image src={cat.img} alt={cat.name} fill className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <h2 className="absolute bottom-4 left-4 text-xl font-semibold text-white">
-                  {cat.name}
-                </h2>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* 📰 Latest News Section */}
         <section className="bg-white rounded-xl shadow-md p-6 mb-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Latest News</h2>
