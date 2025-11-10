@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import ProductCard from "@/components/ProductCard";
 
 export default function CategoryPage() {
   const pathname = usePathname();
@@ -11,6 +14,8 @@ export default function CategoryPage() {
   // Demo items data - Replace this with actual API call later
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(category);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   const categories = [
     { name: "Biscuits", value: "biscuits", img: "/images/biscuit.jpg" },
@@ -70,6 +75,7 @@ export default function CategoryPage() {
           
           console.log('Filtered Products:', filteredProducts); // Debug log
           setItems(filteredProducts);
+          setCurrentPage(1); // Reset to first page when category changes
         } else {
           setError(data.message || "Failed to fetch products");
         }
@@ -94,6 +100,22 @@ export default function CategoryPage() {
       setError(null);
     };
   }, [selectedCategory]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = items.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -146,56 +168,44 @@ export default function CategoryPage() {
 
         {/* Items Grid */}
         {!loading && !error && items.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <div
-                key={item._id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow"
-              >
-                <div className="relative h-48 w-full">
-                  <Image
-                    src={item.productImage}
-                    alt={item.name}
-                    fill
-                    className="object-cover"
-                  />
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentItems.map((item) => (
+                <ProductCard key={item._id} item={item} />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-8">
+                <Button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                  </span>
                 </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{item.name}</h3>
-                  <p className="text-gray-600 mb-2">{item.description}</p>
-                  <div className="mt-2 space-y-2">
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {item.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="bg-blue-100 text-black text-xs px-2 py-1 rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center mt-4">
-                    <div>
-                      <span className="text-lg font-bold text-black">
-                        ₹{item.price}
-                      </span>
-                      {/* {item.publicRating > 0 && (
-                        <div className="text-sm text-yellow-500">
-                          Rating: {item.publicRating}⭐
-                        </div>
-                      )} */}
-                    </div>
-                    <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                      View Details
-                    </button>
-                  </div>
-                </div>
+
+                <Button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
