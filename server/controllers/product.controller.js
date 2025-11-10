@@ -7,11 +7,20 @@ import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from ".
 import { getUserDetailsById } from "./user.controller.js";
 
 export const getProductById = asyncHandler(async (req, res, next) => {
-    const productId = req.params.id;
+    console.log("Fetching product by ID", req.params.productId);
+    const { productId } = req.params;
 
-    const product = await getProductDetailsById(productId);
+    const product = await getProductDetailsByProductId(productId);
 
-    return res.status(200).json(ApiResponse.success("Product fetched successfully", product));
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                product,
+            },
+            "Product fetched successfully"
+        )
+    );
 });
 
 export const getProductDetailsById = async (productId) => {
