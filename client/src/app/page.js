@@ -6,11 +6,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 
-
-
-
 export default function HomePage() {
-  const { theme , toggleTheme } = useContext(ThemeContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const images = [
     "/images/slide1.jpg",
     "/images/slide2.jpg",
@@ -19,18 +16,58 @@ export default function HomePage() {
 
   const categories = [
     { name: "Biscuits", value: "biscuits", img: "/images/biscuit.jpg" },
-    { name: "Breakfast & Spreads", value: "breakfast-and-spreads", img: "/images/bread.jpg" },
-    { name: "Chocolates & Desserts", value: "chocolates-and-desserts", img: "/images/chocolate.jpg" },
-    { name: "Cold Drinks & Juices", value: "cold-drinks-and-juices", img: "/images/colddrinks.jpg" },
-    { name: "Dairy, Bread & Eggs", value: "dairy-bread-and-eggs", img: "/images/dairy.jpg" },
-    { name: "Instant Foods", value: "instant-foods", img: "/images/instant.jpg" },
+    {
+      name: "Breakfast & Spreads",
+      value: "breakfast-and-spreads",
+      img: "/images/bread.jpg",
+    },
+    {
+      name: "Chocolates & Desserts",
+      value: "chocolates-and-desserts",
+      img: "/images/chocolate.jpg",
+    },
+    {
+      name: "Cold Drinks & Juices",
+      value: "cold-drinks-and-juices",
+      img: "/images/colddrinks.jpg",
+    },
+    {
+      name: "Dairy, Bread & Eggs",
+      value: "dairy-bread-and-eggs",
+      img: "/images/dairy.jpg",
+    },
+    {
+      name: "Instant Foods",
+      value: "instant-foods",
+      img: "/images/instant.jpg",
+    },
     { name: "Snacks", value: "snacks", img: "/images/snacks.jpg" },
-    { name: "Cakes & Bakes", value: "cakes-and-bakes", img: "/images/bread.jpg" },
-    { name: "Dry Fruits, Oil & Masalas", value: "dry-fruits-oil-and-masalas", img: "/images/dryfruits.jpg" },
+    {
+      name: "Cakes & Bakes",
+      value: "cakes-and-bakes",
+      img: "/images/bread.jpg",
+    },
+    {
+      name: "Dry Fruits, Oil & Masalas",
+      value: "dry-fruits-oil-and-masalas",
+      img: "/images/dryfruits.jpg",
+    },
     { name: "Meat", value: "meat", img: "/images/meat.jpg" },
-    { name: "Rice, Atta & Dals", value: "rice-atta-and-dals", img: "/images/rice.jpg" },
-    { name: "Tea, Coffee & More", value: "tea-coffee-and-more", img: "/images/coffee.jpg" },
-    { name: "Supplements & Mores", value: "supplements-and-mores", img: "/images/protein.jpg" },
+    {
+      name: "Rice, Atta & Dals",
+      value: "rice-atta-and-dals",
+      img: "/images/rice.jpg",
+    },
+    {
+      name: "Tea, Coffee & More",
+      value: "tea-coffee-and-more",
+      img: "/images/coffee.jpg",
+    },
+    {
+      name: "Supplements & Mores",
+      value: "supplements-and-mores",
+      img: "/images/protein.jpg",
+    },
   ];
 
   const [current, setCurrent] = useState(0);
@@ -73,124 +110,120 @@ export default function HomePage() {
   const displayedCategories = showAll ? categories : categories.slice(0, 4);
 
   const router = useRouter();
-  
+
   const handleCategoryClick = (value) => {
     router.push(`/category/${value}`);
   };
 
   // Theme-based classes
-  const bg = theme === "dark"
-    ? "bg-gradient-to-b from-black via-gray-900 to-gray-800"
-    : "bg-gray-100";
+  const bg =
+    theme === "dark"
+      ? "bg-gradient-to-b from-black via-gray-900 to-gray-800"
+      : "bg-gray-100";
   const cardBg = theme === "dark" ? "bg-black" : "bg-white";
   const cardText = theme === "dark" ? "text-white" : "text-gray-800";
   const subText = theme === "dark" ? "text-gray-300" : "text-gray-700";
-  const buttonText = theme === "dark" ? "text-blue-400 hover:text-blue-200" : "text-blue-600 hover:text-blue-800";
+  const buttonText =
+    theme === "dark"
+      ? "text-blue-400 hover:text-blue-200"
+      : "text-blue-600 hover:text-blue-800";
 
   return (
     <div className={`${bg} min-h-screen transition-colors duration-300`}>
       <Sidebar />
 
-      {/* Search + Theme Toggle */}
-<div className="flex items-center justify-center gap-8 mt-8 mb-12 w-full">
-
-  {/* Frosted Glass Search Bar */}
-  <div className="relative w-full max-w-lg ">
-    <input
-      type="text"
-      placeholder="Search products..."
-      className="
-        w-full px-5 py-3 pl-5 pr-14
+      <main className="md:ml-64 p-8 min-h-screen overflow-y-auto relative">
+        {/* Search + Toggle */}
+        <div className="flex items-center justify-between mb-8 gap-4">
+          {/* Search Bar */}
+          <div className="relative w-full max-w-lg ml-10">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="
+        w-full px-5 py-3 pr-14
         rounded-full 
         bg-white/20 dark:bg-gray-700/20
         backdrop-blur-md 
         text-gray-900 dark:text-gray-100
-        shadow-lg shadow-black/10 dark:shadow-white/5
-        border border-white/30 dark:border-gray-500/30
+        shadow-lg border border-white/30 dark:border-gray-500/30
         focus:outline-none focus:ring-2 focus:ring-blue-400/60
         placeholder-gray-500 dark:placeholder-gray-300
         transition
       "
-    />
+            />
 
-    {/* Search Icon Button */}
-    <button
-      className="
+            {/* Search Icon */}
+            <button
+              className="
         absolute right-3 top-1/2 -translate-y-1/2
         rounded-full p-2
         bg-blue-500 hover:bg-blue-600
-        text-white transition transform hover:scale-105 shadow-md
+        text-white transition shadow-md
       "
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-      </svg>
-    </button>
-  </div>
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                />
+              </svg>
+            </button>
+          </div>
 
-  {/* Animated Theme Toggle */}
-  <div
-    onClick={toggleTheme}
-    className="flex items-center gap-3 cursor-pointer select-none "
-  >
-    {/* Modern Sun */}
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className={`h-5 w-5 transition-all duration-300 ${
-        theme === "dark" ? "opacity-40 scale-90" : "opacity-100 scale-110 text-yellow-400"
-      }`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.41 1.41M18.36 18.36l1.41 1.41M1 12h2M21 12h2M4.22 19.78l1.41-1.41M18.36 5.64l1.41-1.41" />
-    </svg>
+          {/* Toggle Slider */}
+          <div
+            onClick={toggleTheme}
+            className="relative w-20 h-10 rounded-full cursor-pointer bg-gray-300 dark:bg-gray-700 transition-all duration-300 shadow-md flex items-center"
+          >
+            {/* Sun inside slider */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`
+        absolute left-1 h-8 w-8 transition-opacity
+       ${theme === "dark" ? "opacity-30" : "opacity-100 text-yellow-400"}
 
-    {/* Animated Slider */}
-    <div className="relative w-12 h-6 bg-gray-300 dark:bg-gray-600 rounded-full">
-      <div
-        className={`
-          absolute top-0.5 
-          w-5 h-5 rounded-full shadow-md 
-          transition-all duration-300 ease-out 
-          ${theme === "dark" 
-            ? "right-0.5 bg-gray-900 scale-105" 
-            : "left-0.5 bg-white scale-100"
-          }
-        `}
-      ></div>
-    </div>
+      `}
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="6" />
+            </svg>
 
-    {/* Modern Moon */}
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className={`h-5 w-5 transition-all duration-300 ${
-        theme === "dark" ? "opacity-100 scale-110 text-blue-300" : "opacity-40 scale-90"
-      }`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-    </svg>
-  </div>
+            {/* Moon inside slider */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`
+        absolute right-1 h-6 w-6 transition-opacity
+       ${theme === "dark" ? "opacity-100 text-blue-300" : "opacity-30"}
 
-</div>
+      `}
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
 
+            {/* Slider Knob */}
+            <div
+              className={`
+        absolute top-0.6 w-10 h-9 rounded-full
+        bg-transparent
+        shadow-md transition-all duration-300
+        ${theme === "dark" ? "right-0.5" : "left-0.5"}
+      `}
+            ></div>
+          </div>
+        </div>
 
-
-
-
-      <main className="md:ml-64 p-8 min-h-screen overflow-y-auto relative">
         {/* Auto Image Slider */}
         <div className="relative w-full h-64 overflow-hidden rounded-2xl shadow-lg mb-8">
           {images.map((img, index) => (
@@ -200,13 +233,21 @@ export default function HomePage() {
                 index === current ? "opacity-100" : "opacity-0"
               }`}
             >
-              <Image src={img} alt={`Slide ${index + 1}`} fill className="object-cover" priority={index === 0} />
+              <Image
+                src={img}
+                alt={`Slide ${index + 1}`}
+                fill
+                className="object-cover"
+                priority={index === 0}
+              />
             </div>
           ))}
         </div>
 
         {/* Top Categories */}
-        <h1 className={`text-3xl font-bold mb-6 ${cardText}`}>Top Categories</h1>
+        <h1 className={`text-3xl font-bold mb-6 ${cardText}`}>
+          Top Categories
+        </h1>
 
         <div
           className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-12 transition-all duration-500 ${
@@ -220,10 +261,17 @@ export default function HomePage() {
               className={`${cardBg} rounded-xl shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer`}
             >
               <div className="relative w-full h-40">
-                <Image src={cat.img} alt={cat.name} fill className="object-cover" />
+                <Image
+                  src={cat.img}
+                  alt={cat.name}
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div className="p-4 text-center">
-                <h2 className={`text-lg font-semibold ${cardText}`}>{cat.name}</h2>
+                <h2 className={`text-lg font-semibold ${cardText}`}>
+                  {cat.name}
+                </h2>
               </div>
             </div>
           ))}
@@ -248,7 +296,9 @@ export default function HomePage() {
         </div>
 
         {/* Categories Grid - Updated Layout */}
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Browse Categories</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+          Browse Categories
+        </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
           {categories.map((cat, index) => (
             <div
@@ -257,7 +307,12 @@ export default function HomePage() {
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer"
             >
               <div className="relative w-full h-48">
-                <Image src={cat.img} alt={cat.name} fill className="object-cover" />
+                <Image
+                  src={cat.img}
+                  alt={cat.name}
+                  fill
+                  className="object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <h2 className="absolute bottom-4 left-4 text-xl font-semibold text-white">
                   {cat.name}
@@ -272,16 +327,25 @@ export default function HomePage() {
           <h2 className={`text-2xl font-bold mb-4 ${cardText}`}>Latest News</h2>
 
           {!news ? (
-            <p className={`${subText} italic`}>Fetching latest health news...</p>
+            <p className={`${subText} italic`}>
+              Fetching latest health news...
+            </p>
           ) : (
             <div className="flex flex-col sm:flex-row items-center gap-6">
               {news.image && (
                 <div className="relative w-full sm:w-1/3 h-48 rounded-xl overflow-hidden">
-                  <Image src={news.image} alt={news.title} fill className="object-cover" />
+                  <Image
+                    src={news.image}
+                    alt={news.title}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               )}
               <div className="sm:w-2/3">
-                <h3 className={`text-xl font-semibold mb-2 ${cardText}`}>{news.title}</h3>
+                <h3 className={`text-xl font-semibold mb-2 ${cardText}`}>
+                  {news.title}
+                </h3>
                 <p className={`${subText} mb-3`}>{news.description}</p>
                 <button
                   onClick={() => setShowModal(true)}
@@ -323,11 +387,18 @@ export default function HomePage() {
               </button>
 
               {/* Article content */}
-              <h2 className={`text-2xl font-bold mb-4 ${cardText}`}>{news.title}</h2>
+              <h2 className={`text-2xl font-bold mb-4 ${cardText}`}>
+                {news.title}
+              </h2>
 
               {news.image && (
                 <div className="relative w-full h-52 mb-4 rounded-xl overflow-hidden">
-                  <Image src={news.image} alt={news.title} fill className="object-cover" />
+                  <Image
+                    src={news.image}
+                    alt={news.title}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               )}
 
