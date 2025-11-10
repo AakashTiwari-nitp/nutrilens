@@ -1,15 +1,22 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { ThemeContext } from '@/context/ThemeContext';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 export default function ProductDetailsPage() {
+  const { theme } = useContext(ThemeContext);
   const pathname = usePathname();
   const productId = pathname.split("/").pop();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const bg = theme === "dark" ? "bg-gray-900" : "bg-gray-100";
+  const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
+  const textColor = theme === "dark" ? "text-white" : "text-gray-900";
+  const subText = theme === "dark" ? "text-gray-300" : "text-gray-600";
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -47,9 +54,9 @@ export default function ProductDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen ${bg} py-12 px-4 sm:px-6 lg:px-8 md:ml-48 transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className={`${cardBg} rounded-xl shadow-lg overflow-hidden transition-colors duration-300`}>
           {/* Product Header */}
           <div className="p-8">
             <Link href={`/category/${product.category}`} className="text-blue-600 hover:underline mb-4 block">
@@ -68,8 +75,12 @@ export default function ProductDetailsPage() {
 
               {/* Product Info */}
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
-                <p className="text-gray-600 mb-4">{product.description}</p>
+                <h1 className={`text-3xl font-bold ${textColor} mb-4 transition-colors duration-300`}>
+                  {product.name}
+                </h1>
+                <p className={`${subText} mb-4 transition-colors duration-300`}>
+                  {product.description}
+                </p>
                 <div className="space-y-4">
                   <p className="text-2xl font-bold text-blue-600">₹{product.price}</p>
                   <div className="flex gap-2">
@@ -80,8 +91,10 @@ export default function ProductDetailsPage() {
                     ))}
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Product ID: {product.productId}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className={`text-sm ${subText} transition-colors duration-300`}>
+                      Product ID: {product.productId}
+                    </p>
+                    <p className={`text-sm ${subText} transition-colors duration-300`}>
                       Expiry: {new Date(product.expiryDate).toLocaleDateString()}
                     </p>
                   </div>
@@ -91,24 +104,24 @@ export default function ProductDetailsPage() {
           </div>
 
           {/* Nutritional Info */}
-          <div className="border-t border-gray-200 p-8">
-            <h2 className="text-2xl font-bold mb-4">Nutritional Information</h2>
+          <div className="border-t border-gray-200 dark:border-gray-700 p-8">
+            <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Nutritional Information</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
               {Object.entries(product.nutritionalInfo).map(([key, value]) => (
-                <div key={key} className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-gray-600 capitalize">{key}</p>
-                  <p className="font-bold text-gray-900">{value}</p>
+                <div key={key} className={`${theme === "dark" ? "bg-gray-700" : "bg-gray-50"} p-4 rounded-lg text-center transition-colors duration-300`}>
+                  <p className={`${subText} capitalize transition-colors duration-300`}>{key}</p>
+                  <p className={`font-bold ${textColor} transition-colors duration-300`}>{value}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Ingredients */}
-          <div className="border-t border-gray-200 p-8">
-            <h2 className="text-2xl font-bold mb-4">Ingredients</h2>
+          <div className="border-t border-gray-200 dark:border-gray-700 p-8">
+            <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Ingredients</h2>
             <div className="flex flex-wrap gap-2">
               {product.ingredients.map((ingredient, index) => (
-                <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm">
+                <span key={index} className={`px-3 py-1 ${theme === "dark" ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"} rounded-full text-sm transition-colors duration-300`}>
                   {ingredient}
                 </span>
               ))}
@@ -116,7 +129,7 @@ export default function ProductDetailsPage() {
           </div>
 
           {/* Additional Information */}
-          <div className="border-t border-gray-200 p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h2 className="text-2xl font-bold mb-4">Product Details</h2>
               <div className="space-y-2">

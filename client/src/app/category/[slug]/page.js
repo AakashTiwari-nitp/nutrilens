@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
+import Header from "@/components/Header";
 
 export default function CategoryPage() {
   const pathname = usePathname();
@@ -118,32 +119,10 @@ export default function CategoryPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Category Sidebar - Keep this one */}
-      <div className="hidden md:flex w-64 flex-col fixed h-screen bg-white shadow-lg overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">Categories</h2>
-          <div className="space-y-2">
-            {categories.map((cat) => (
-              <Link
-                key={cat.value}
-                href={`/category/${cat.value}`}
-                className={`block p-2 rounded-lg transition-colors ${
-                  selectedCategory === cat.value
-                    ? "bg-blue-100 text-black"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 md:ml-64 p-8">
-        <h1 className="text-3xl font-bold mb-6 capitalize">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="flex-1 md:ml-48 p-8">
+        <Header />
+        <h1 className="text-3xl font-bold mb-6 capitalize text-gray-800 dark:text-white">
           {selectedCategory.replace(/-/g, " ")}
         </h1>
 

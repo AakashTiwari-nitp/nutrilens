@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import Header from "@/components/Header";
 
 export default function HomePage() {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -131,98 +132,8 @@ export default function HomePage() {
   return (
     <div className={`${bg} min-h-screen transition-colors duration-300`}>
       <Sidebar />
-
-      <main className="md:ml-64 p-8 min-h-screen overflow-y-auto relative">
-        {/* Search + Toggle */}
-        <div className="flex items-center justify-between mb-8 gap-4">
-          {/* Search Bar */}
-          <div className="relative w-full max-w-lg ml-10">
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="
-        w-full px-5 py-3 pr-14
-        rounded-full 
-        bg-white/20 dark:bg-gray-700/20
-        backdrop-blur-md 
-        text-gray-900 dark:text-gray-100
-        shadow-lg border border-white/30 dark:border-gray-500/30
-        focus:outline-none focus:ring-2 focus:ring-blue-400/60
-        placeholder-gray-500 dark:placeholder-gray-300
-        transition
-      "
-            />
-
-            {/* Search Icon */}
-            <button
-              className="
-        absolute right-3 top-1/2 -translate-y-1/2
-        rounded-full p-2
-        bg-blue-500 hover:bg-blue-600
-        text-white transition shadow-md
-      "
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Toggle Slider */}
-          <div
-            onClick={toggleTheme}
-            className="relative w-20 h-10 rounded-full cursor-pointer bg-gray-300 dark:bg-gray-700 transition-all duration-300 shadow-md flex items-center"
-          >
-            {/* Sun inside slider */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`
-        absolute left-1 h-8 w-8 transition-opacity
-       ${theme === "dark" ? "opacity-30" : "opacity-100 text-yellow-400"}
-
-      `}
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <circle cx="12" cy="12" r="6" />
-            </svg>
-
-            {/* Moon inside slider */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`
-        absolute right-1 h-6 w-6 transition-opacity
-       ${theme === "dark" ? "opacity-100 text-blue-300" : "opacity-30"}
-
-      `}
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-            </svg>
-
-            {/* Slider Knob */}
-            <div
-              className={`
-        absolute top-0.6 w-10 h-9 rounded-full
-        bg-transparent
-        shadow-md transition-all duration-300
-        ${theme === "dark" ? "right-0.5" : "left-0.5"}
-      `}
-            ></div>
-          </div>
-        </div>
+      <main className="md:ml-48 p-8 min-h-screen overflow-y-auto relative">
+        <Header />
 
         {/* Auto Image Slider */}
         <div className="relative w-full h-64 overflow-hidden rounded-2xl shadow-lg mb-8">
