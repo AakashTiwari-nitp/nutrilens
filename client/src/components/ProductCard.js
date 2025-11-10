@@ -1,7 +1,9 @@
 import Image from 'next/image'
 import React from 'react'
+import { useRouter } from 'next/navigation';
 
 const ProductCard = ({ item }) => {
+    const router = useRouter();
 
     return (
         <div
@@ -39,16 +41,19 @@ const ProductCard = ({ item }) => {
 
                 <div className="flex justify-between items-center mt-4">
                     <div>
-                        <span className="text-lg font-bold text-black">
+                        <span className="text-lg font-bold text-blue-600">
                             ₹{item.price}
                         </span>
-                        {/* {item.publicRating > 0 && (
-                          <div className="text-sm text-yellow-500">
-                            Rating: {item.publicRating}⭐
-                          </div>
-                        )} */}
+                        {item.publicRating > 0 && (
+                            <div className="text-sm text-yellow-500">
+                                Rating: {item.publicRating}⭐
+                            </div>
+                        )}
                     </div>
-                    <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    <button
+                        onClick={() => router.push(`/product/${item.productId}`)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                         View Details
                     </button>
                 </div>
