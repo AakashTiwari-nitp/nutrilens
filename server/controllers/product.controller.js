@@ -7,11 +7,20 @@ import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from ".
 import { getUserDetailsById } from "./user.controller.js";
 
 export const getProductById = asyncHandler(async (req, res, next) => {
-    const productId = req.params.id;
+    console.log("Fetching product by ID", req.params.productId);
+    const { productId } = req.params;
 
-    const product = await getProductDetailsById(productId);
+    const product = await getProductDetailsByProductId(productId);
 
-    return res.status(200).json(ApiResponse.success("Product fetched successfully", product));
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                product,
+            },
+            "Product fetched successfully"
+        )
+    );
 });
 
 export const getProductDetailsById = async (productId) => {
@@ -166,4 +175,63 @@ export const updateProductImage = asyncHandler(async (req, res, next) => {
             "Product image updated successfully"
         )
     );
+});
+
+export const updateProductDetails = asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+
+    const product = await getProductDetailsByProductId(productId);
+
+    const user = req.user;
+
+    if (user.role !== 'company' || user.accountStatus !== 'approved') {
+        throw new ApiError(403, "Only approved companies can update product details");
+    }
+
+    if (product.companyId.toString() !== user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to update this product details");
+    }
+
+    const {
+        name,
+        description,
+        category,
+        nutritionalInfo,
+        diseases,
+        certifications,
+        alternatives,
+        ingredients,
+        price,
+        tags,
+    } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+        product._id,
+        {
+            $set: {
+                name: name || product.name,
+                description: description || product.description,
+                category: category || product.category,
+                nutritionalInfo: nutritionalInfo ? JSON.parse(nutritionalInfo) : product.nutritionalInfo,
+                diseases: diseases ? JSON.parse(diseases) : product.diseases,
+                certifications: certifications ? JSON.parse(certifications) : product.certifications,
+                alternatives: alternatives ? JSON.parse(alternatives) : product.alternatives,
+                ingredients: ingredients ? JSON.parse(ingredients) : product.ingredients,
+                price: price || product.price,
+                tags: tags ? JSON.parse(tags) : product.tags,
+            }
+        },
+        { new: true }
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                updatedProduct,
+            },
+            "Product details updated successfully"
+        )
+    );
+
 });

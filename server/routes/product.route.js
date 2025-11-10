@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllProducts, getProductById, registerProduct, updateProductImage } from "../controllers/product.controller.js";
+import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -17,7 +17,12 @@ router.route("/update-image/:productId").patch(
     updateProductImage
 )
 
+router.route("/update-product/:productId").patch(
+    authenticateUser,
+    updateProductDetails
+)
+
 router.get("/get-products", getAllProducts);
 
-router.route("/:id").post(getProductById);
+router.route("/:productId").get(getProductById);
 export default router;

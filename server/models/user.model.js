@@ -90,8 +90,13 @@ const userSchema = new Schema(
             type: String,
             enum: ['approved', 'verified', 'banned', 'pending'],
             default: 'pending',
-        }
-    }, { timestamps: true, });
+        },
+        news: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "News",
+        }]
+    }, { timestamps: true, }
+);
 
 
 userSchema.pre("save", async function (next) {
