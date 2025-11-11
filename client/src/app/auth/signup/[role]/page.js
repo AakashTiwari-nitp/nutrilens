@@ -7,7 +7,7 @@ export default function RoleSignupPage() {
   const router = useRouter();
   const pathname = usePathname();
   const role = pathname.split('/').pop();
-  
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -33,7 +33,7 @@ export default function RoleSignupPage() {
     try {
       // Remove confirmPassword before sending to backend
       const { confirmPassword, ...registrationData } = formData;
-      
+
       // Validate required fields
       if (!registrationData.fullName || !registrationData.email || !registrationData.username || !registrationData.password) {
         setError('All fields are required');
@@ -55,7 +55,7 @@ export default function RoleSignupPage() {
         setLoading(false);
         return;
       }
-      
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
       const response = await fetch(`${apiUrl}/user/register`, {
         method: 'POST',
@@ -101,13 +101,13 @@ export default function RoleSignupPage() {
   const renderFields = () => {
     const commonFields = (
       <>
-        <div>
+        <div className='text-gray-900'>
           <label className="block text-sm font-medium text-gray-700">Full Name</label>
           <input
             type="text"
             required
             value={formData.fullName}
-            onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -117,7 +117,7 @@ export default function RoleSignupPage() {
             type="email"
             required
             value={formData.email}
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -127,7 +127,7 @@ export default function RoleSignupPage() {
             type="text"
             required
             value={formData.username}
-            onChange={(e) => setFormData({...formData, username: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -137,7 +137,7 @@ export default function RoleSignupPage() {
             type="password"
             required
             value={formData.password}
-            onChange={(e) => setFormData({...formData, password: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -147,7 +147,7 @@ export default function RoleSignupPage() {
             type="password"
             required
             value={formData.confirmPassword}
-            onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -175,7 +175,7 @@ export default function RoleSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-100 text-gray-800 flex flex-col justify-center py-12 px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-8">
           Create {role.charAt(0).toUpperCase() + role.slice(1)} Account
@@ -186,7 +186,7 @@ export default function RoleSignupPage() {
         <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             {renderFields()}
-            
+
             {error && (
               <div className="text-red-600 text-sm">{error}</div>
             )}

@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
 
@@ -10,6 +10,9 @@ export default function EditProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [previewAvatar, setPreviewAvatar] = useState(null);
+  const fileInputRef = useRef(null);
+  const prevObjectUrlRef = useRef(null);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -43,8 +46,20 @@ export default function EditProfilePage() {
         gender: user.gender ?? null,
         isVeg: user.isVeg ?? null,
       });
+      // initialize preview from user avatar if available
+      setPreviewAvatar(user?.avatar ?? null);
     }
   }, [user]);
+
+  // cleanup any created object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (prevObjectUrlRef.current) {
+        URL.revokeObjectURL(prevObjectUrlRef.current);
+        prevObjectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const handleChange = (key, value) => setForm((p) => ({ ...p, [key]: value }));
 
@@ -57,7 +72,6 @@ export default function EditProfilePage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const payload = {
         fullName: form.fullName || undefined,
-        email: form.email || undefined,
         mobile: form.mobile || undefined,
         address: form.address || undefined,
         country: form.country || undefined,
@@ -103,7 +117,16 @@ export default function EditProfilePage() {
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok || !data?.success) throw new Error(data?.message || "Avatar upload failed");
       const updated = data?.data?.user;
-      if (updated) login(updated);
+      if (updated) {
+        login(updated);
+        // prefer server avatar when available
+        setPreviewAvatar(updated.avatar ?? null);
+        // revoke any temporary object URL created for preview
+        if (prevObjectUrlRef.current) {
+          try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (e) { }
+          prevObjectUrlRef.current = null;
+        }
+      }
       setSuccess("Avatar updated successfully");
     } catch (err) {
       setError(err.message || "Avatar upload failed");
@@ -113,7 +136,7 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Edit Profile</h1>
@@ -126,21 +149,60 @@ export default function EditProfilePage() {
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-4 mb-6">
-            <img
-              src={user?.avatar || "/images/nutrilens_logo.png"}
-              alt="Avatar"
-              className="w-16 h-16 rounded-full object-cover border"
-            />
-            <div>
-              <label className="text-sm text-gray-600 mr-3">Change photo:</label>
+          <div className="flex items-center gap-4 md:gap-8 mb-6">
+            <div className="relative">
+              <img
+                src={previewAvatar || user?.avatar || "/images/nutrilens_logo.png"}
+                alt="Avatar"
+                className="w-16 h-16 rounded-full object-cover border"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Change avatar"
+                className="absolute -bottom-0.5 -right-0.5 bg-white border rounded-full p-1 shadow hover:bg-gray-50 focus:outline-none"
+              >
+                {/* pencil icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
+                </svg>
+              </button>
+
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  // create local preview
+                  const objectUrl = URL.createObjectURL(f);
+                  if (prevObjectUrlRef.current) {
+                    URL.revokeObjectURL(prevObjectUrlRef.current);
+                  }
+                  prevObjectUrlRef.current = objectUrl;
+                  setPreviewAvatar(objectUrl);
+                  // upload in background
+                  handleAvatarUpload(f);
+                }}
+                className="hidden"
                 disabled={uploading}
-                className="text-sm"
               />
+
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white/80 p-2 rounded-full">
+                    <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="text-gray-700 font-medium">{user?.fullName || user?.username || "User"}</div>
+              <div className="text-gray-700 font-medium">@{user?.username || "User"}</div>
             </div>
           </div>
 
@@ -167,9 +229,9 @@ export default function EditProfilePage() {
                 <label className="text-gray-500 text-sm">Email</label>
                 <input
                   type="email"
+                  disabled
                   value={form.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="mt-1 border rounded px-3 py-2"
+                  className="mt-1 border text-gray-500 rounded px-3 py-2"
                 />
               </div>
               <div className="flex flex-col py-2 border-b border-gray-100">

@@ -24,7 +24,7 @@ export default function SignupPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-6">
             Select your account type
           </h3>
-          
+
           <div className="space-y-4">
             {[
               { role: 'user', title: 'Individual User', description: 'For personal use and nutrition tracking' },

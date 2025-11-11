@@ -14,7 +14,7 @@ function LoginForm() {
     email: '',
     password: '',
   });
-  
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,11 +32,11 @@ function LoginForm() {
       }
 
       const isEmail = identifier.includes('@');
-      
+
       const requestBody = {
         password: formData.password,
       };
-      
+
       if (isEmail) {
         requestBody.email = identifier.toLowerCase();
       } else {
@@ -65,7 +65,7 @@ function LoginForm() {
       if (response.ok && data.success && data.data && data.data.user) {
         // Update auth context
         login(data.data.user);
-        
+
         // Redirect based on user role
         switch (data.data.user.role) {
           case 'admin':
@@ -118,7 +118,7 @@ function LoginForm() {
                 type="text"
                 required
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black-500 focus:ring-black-500 text-gray-500"
               />
             </div>
@@ -131,7 +131,7 @@ function LoginForm() {
                 type="password"
                 required
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>

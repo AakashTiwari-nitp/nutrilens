@@ -44,6 +44,17 @@ export default function UserProfilePage() {
     return user.gender ? "Male" : "Female";
   }, [user]);
 
+  const avatarSrc = (() => {
+    const userAvatar = user?.avatar;
+    if (userAvatar && typeof userAvatar === "string" && userAvatar.trim() !== "") {
+      return userAvatar;
+    }
+    // user.gender is expected to be boolean (true = Male, false = Female) or null/undefined
+    if (user?.gender === true) return "/images/male-placeholder.webp";
+    if (user?.gender === false) return "/images/female-placeholder.webp";
+    return "/images/nutrilens_logo.png";
+  })();
+
   const dobText = useMemo(() => {
     if (!user?.dob) return "—";
     try {
@@ -59,7 +70,7 @@ export default function UserProfilePage() {
   const newsCount = user?.news?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Your Profile</h1>
         <div className="mb-4">
@@ -74,8 +85,8 @@ export default function UserProfilePage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-4 mb-6">
             <img
-              src={user?.avatar || "/images/nutrilens_logo.png"}
-              alt="Avatar"
+              src={avatarSrc}
+              alt={`${user?.fullName ?? user?.username ?? "User"} avatar`}
               className="w-16 h-16 rounded-full object-cover border"
             />
             <div>
