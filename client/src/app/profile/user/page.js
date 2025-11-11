@@ -2,6 +2,8 @@
 import { useContext, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
+import { MdVerified } from "react-icons/md";
+import { GoPencil } from "react-icons/go";
 
 function InfoRow({ label, value }) {
   return (
@@ -73,14 +75,6 @@ export default function UserProfilePage() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Your Profile</h1>
-        <div className="mb-4">
-          <button
-            onClick={() => router.push("/profile/edit")}
-            className="text-sm px-4 py-2 border rounded-md hover:bg-gray-50"
-          >
-            Edit Profile
-          </button>
-        </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-4 mb-6">
@@ -90,11 +84,52 @@ export default function UserProfilePage() {
               className="w-16 h-16 rounded-full object-cover border"
             />
             <div>
-              <div className="text-xl font-semibold text-gray-900">
+              <div className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                 {user?.fullName ?? user?.username ?? "User"}
               </div>
-              <div className="text-gray-500">@{user?.username}</div>
+              <div className="flex items-center gap-2">
+                <div className="text-gray-500">@{user?.username}</div>
+                {user?.accountStatus === "verified" && (
+                  <>
+                    <span title="Verified" className="text-green-600 inline-flex items-center">
+                      <MdVerified className="h-5 w-5" />
+                    </span>
+                    <button
+                      onClick={() => router.push("/auth/approve")}
+                      className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded hover:bg-blue-200"
+                    >
+                      Apply for Approval
+                    </button>
+                  </>
+                )}
+
+                {user?.accountStatus === "approved" && (
+                  <span title="Approved" className="text-green-600 inline-flex items-center">
+                    <MdVerified className="h-5 w-5" />
+                  </span>
+                )}
+                {user?.accountStatus === "pending" && (
+                  <button
+                    onClick={() => router.push("/auth/verify")}
+                    className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded hover:bg-blue-200"
+                  >
+                    Get Verified
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* improved edit button */}
+            <button
+              type="button"
+              onClick={() => router.push("/profile/edit")}
+              aria-label="Edit profile"
+              className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-200"
+            >
+              <GoPencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
+
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
