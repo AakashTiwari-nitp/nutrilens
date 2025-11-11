@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getUserById, registerUser, loginUser, logoutUser, refreshAccessToken, updateUserAvatar, updateUserAccountDetails, changePassword, getAllProductsOfTheCompany } from "../controllers/user.controller.js";
+import { getUserById, getMyProfile, registerUser, loginUser, logoutUser, refreshAccessToken, updateUserAvatar, updateUserAccountDetails, changePassword, getAllProductsOfTheCompany } from "../controllers/user.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -29,6 +29,6 @@ router.route("/change-password").post(authenticateUser, changePassword);
 
 router.route("/get-all-products").get(authenticateUser, getAllProductsOfTheCompany);
 
-router.route("/profile").get(authenticateUser, getUserById);
+router.route("/profile").get(authenticateUser, getMyProfile);
 
 export default router;

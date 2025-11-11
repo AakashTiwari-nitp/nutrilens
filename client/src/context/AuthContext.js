@@ -13,15 +13,32 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const response = await fetch(`${apiUrl}/user/profile`, {
+        let response = await fetch(`${apiUrl}/user/profile`, {
           method: "GET",
           credentials: "include",
         });
+
+        if (!response.ok && response.status === 401) {
+          // try to refresh access token and retry
+          const refreshResp = await fetch(`${apiUrl}/user/refresh-token`, {
+            method: "POST",
+            credentials: "include",
+          });
+          if (refreshResp.ok) {
+            response = await fetch(`${apiUrl}/user/profile`, {
+              method: "GET",
+              credentials: "include",
+            });
+          }
+        }
 
         if (response.ok) {
           const data = await response.json();
           setUser(data.data?.user);
           setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Auth check failed:", error);

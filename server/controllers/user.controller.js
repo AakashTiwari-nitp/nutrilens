@@ -21,6 +21,22 @@ export const getUserById = asyncHandler(async (req, res, next) => {
     );
 });
 
+export const getMyProfile = asyncHandler(async (req, res, next) => {
+    const userId = req.user?._id;
+
+    const user = await getUserDetailsById(userId);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                user,
+            },
+            "User fetched successfully"
+        )
+    );
+});
+
 export const getUserDetailsById = async (userId) => {
     // console.log(`Getting user by ID: ${userId}`);
     if (!userId) {
