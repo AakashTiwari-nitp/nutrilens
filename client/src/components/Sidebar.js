@@ -2,6 +2,7 @@
 import React, { useState, useContext } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 import { ThemeContext } from "../context/ThemeContext";
 import { FaBars, FaTimes, FaChevronDown, FaChevronUp } from "react-icons/fa";
@@ -61,12 +62,14 @@ const Sidebar = () => {
           ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-center h-16 border-b border-gray-300 dark:border-gray-700">
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-              LOGO
-            </h1>
-          </div>
+          <Image
+        src="/images/nutrilens_logo.png"
+        alt="NutriLens Logo"
+        width={60}        // 96px
+        height={60}       // 96px
+        className="rounded-full object-cover ml-6 mt-8"
+        priority          // loads faster
+      />
 
           {/* Menu */}
           <nav className="mt-4 px-4">
@@ -122,19 +125,39 @@ const Sidebar = () => {
           {/* Spacer pushes remaining items to bottom */}
           <div className="grow" />
 
-          {/* Login/Register */}
-          <div className="px-4 mb-4 mx-auto">
-            <Link
-              href="/auth/signup"
-              onClick={() => setIsOpen(false)}
-              className={`w-full py-2 px-4 rounded-lg font-semibold transition
-                ${theme === "dark"
-                  ? "bg-white text-black hover:bg-gray-200"
-                  : "bg-black text-white hover:bg-gray-900"}`}
-            >
-              Login / Signup
-            </Link>
-          </div>
+         {/* Login/Register */}
+<div className="px-4 mb-4 mx-auto">
+  <Link
+    href="/auth/signup"
+    onClick={() => setIsOpen(false)}
+    className={`
+      w-full py-3 px-5 text-center font-semibold text-sm 
+      rounded-full transition-all duration-300 relative overflow-hidden
+      flex items-center justify-center
+      ${
+        theme === "dark"
+          ? "bg-linear-to-r from-white/80 via-gray-200 to-white/70 text-black shadow-lg shadow-white/20 border border-white/20 hover:shadow-white/40"
+          : "bg-linear-to-r from-black via-gray-800 to-black text-white shadow-lg shadow-black/20 border border-black/20 hover:shadow-black/40"
+      }
+      hover:scale-[1.03]
+    `}
+  >
+    {/* Inner sheen effect */}
+    <span
+      className={`
+        absolute inset-0 rounded-full pointer-events-none
+        ${
+          theme === "dark"
+            ? "bg-linear-to-r from-transparent via-white/20 to-transparent opacity-40"
+            : "bg-linear-to-r from-transparent via-gray-300/20 to-transparent opacity-40"
+        }
+      `}
+    ></span>
+
+    Login / Signup
+  </Link>
+</div>
+
 
           {/* Divider */}
           <div className="border-t border-gray-300 dark:border-gray-700 mx-4 my-3" />
