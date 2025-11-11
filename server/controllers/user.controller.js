@@ -6,6 +6,7 @@ import { deleteFromImageKit, getFileIdFromUrl, uploadAvatarOnImageKit } from "..
 import jwt from "jsonwebtoken";
 
 export const getUserById = asyncHandler(async (req, res, next) => {
+    console.log(req.params);
     const userId = req.params.id;
 
     const user = await getUserDetailsById(userId);

@@ -31,4 +31,6 @@ router.route("/get-all-products").get(authenticateUser, getAllProductsOfTheCompa
 
 router.route("/profile").get(authenticateUser, getMyProfile);
 
+router.route("/:id").get(getUserById)
+
 export default router;

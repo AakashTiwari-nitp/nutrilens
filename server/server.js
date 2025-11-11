@@ -24,12 +24,14 @@ import healthCheckRoutes from "./routes/healthCheck.route.js";
 import userRoutes from "./routes/user.route.js";
 import productRoutes from "./routes/product.route.js";
 import newsRoutes from "./routes/news.route.js";
+import otpRoutes from "./routes/otp.route.js";
 
 // route declarations
 app.use("/api/v1/health", healthCheckRoutes);
 app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/product", productRoutes); 
-app.use("/api/v1/news", newsRoutes); 
+app.use("/api/v1/product", productRoutes);
+app.use("/api/v1/news", newsRoutes);
+app.use("/api/v1/otp", otpRoutes);
 
 connectDB().then(() => {
     app.listen(PORT, () => {
