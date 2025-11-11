@@ -23,7 +23,9 @@ export const getUserById = asyncHandler(async (req, res, next) => {
 
 export const getUserDetailsById = async (userId) => {
     // console.log(`Getting user by ID: ${userId}`);
-    userId = userId || req.params.id;
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
 
     const user = await User.findById(userId).select("-password -refreshToken");
 
@@ -62,13 +64,13 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     // console.log(`email: ${email}`);
 
     if (
-        [fullName, email, password, username].some((field) => field?.trim() === "")
+        [fullName, email, password, username].some((field) => !field || field?.trim() === "")
     ) {
-        throw new ApiError(400, "All fields is required")
+        throw new ApiError(400, "All fields are required")
     }
 
     const existedUser = await User.findOne({
-        $or: [{ email }, { username }]
+        $or: [{ email: email?.toLowerCase() }, { username: username?.toLowerCase() }]
     });
 
     if (existedUser) {
@@ -77,7 +79,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
     const user = await User.create({
         fullName,
-        email,
+        email: email.toLowerCase(),
         role: role || 'user',
         username: username.toLowerCase(),
         password
@@ -92,7 +94,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
     return res.status(201).json(
         new ApiResponse(
-            200,
+            201,
             {
                 createdUser,
             },
@@ -105,12 +107,25 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     const { username, email, password } = req.body;
     // console.log(`username: ${username}, email: ${email}`)
 
+    if (!password) {
+        throw new ApiError(400, "Password is required");
+    }
+
     if (!username && !email) {
-        throw new ApiError(400, "Username or Email is Required");
+        throw new ApiError(400, "Username or Email is required");
+    }
+
+    // Build query conditions - only include fields that are provided
+    const queryConditions = [];
+    if (username) {
+        queryConditions.push({ username: username.toLowerCase().trim() });
+    }
+    if (email) {
+        queryConditions.push({ email: email.toLowerCase().trim() });
     }
 
     const user = await User.findOne({
-        $or: [{ username }, { email }]
+        $or: queryConditions
     })
 
     if (!user) {
@@ -131,7 +146,8 @@ export const loginUser = asyncHandler(async (req, res, next) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
 
     return res
@@ -163,7 +179,8 @@ export const logoutUser = asyncHandler(async (req, res, next) => {
 
     const options = {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
 
     return res
@@ -203,10 +220,11 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         }
 
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id);
+        const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshToken(user._id);
 
         res
             .status(200)

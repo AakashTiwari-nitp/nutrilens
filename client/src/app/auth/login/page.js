@@ -22,34 +22,69 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/login`, {
+      // Determine if input is email or username
+      const identifier = formData.email.trim();
+      if (!identifier || !formData.password) {
+        setError('Please enter both email/username and password');
+        setLoading(false);
+        return;
+      }
+
+      const isEmail = identifier.includes('@');
+      
+      const requestBody = {
+        password: formData.password,
+      };
+      
+      // Send as email or username based on input
+      if (isEmail) {
+        requestBody.email = identifier.toLowerCase();
+      } else {
+        requestBody.username = identifier.toLowerCase();
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${apiUrl}/user/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestBody),
         credentials: 'include',
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        setError(`Server error: ${response.status} ${response.statusText}`);
+        setLoading(false);
+        return;
+      }
 
-      if (data.success) {
+      if (response.ok && data.success && data.data && data.data.user) {
         // Redirect based on user role
         switch (data.data.user.role) {
           case 'admin':
-            router.push('/admin/dashboard');
+            router.push('/admin/');
             break;
           case 'company':
-            router.push('/company/dashboard');
+            router.push('/company/');
             break;
           default:
-            router.push('/dashboard');
+            router.push('/');
         }
       } else {
-        setError(data.message || 'Login failed');
+        let errorMessage = data.message || data.error?.message || `Login failed (${response.status})`;
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          errorMessage = data.errors.join(', ');
+        }
+        setError(errorMessage);
+        console.error('Login error:', data);
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      console.error('Login exception:', err);
+      setError(err.message || 'Network error. Please check if the server is running.');
     } finally {
       setLoading(false);
     }

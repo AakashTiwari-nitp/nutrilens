@@ -31,26 +31,68 @@ export default function RoleSignupPage() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/register`, {
+      // Remove confirmPassword before sending to backend
+      const { confirmPassword, ...registrationData } = formData;
+      
+      // Validate required fields
+      if (!registrationData.fullName || !registrationData.email || !registrationData.username || !registrationData.password) {
+        setError('All fields are required');
+        setLoading(false);
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(registrationData.email)) {
+        setError('Please enter a valid email address');
+        setLoading(false);
+        return;
+      }
+
+      // Validate password length
+      if (registrationData.password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        setLoading(false);
+        return;
+      }
+      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${apiUrl}/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
-          role,
+          fullName: registrationData.fullName.trim(),
+          email: registrationData.email.trim().toLowerCase(),
+          username: registrationData.username.trim().toLowerCase(),
+          password: registrationData.password,
+          role: role || 'user',
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        setError(`Server error: ${response.status} ${response.statusText}`);
+        setLoading(false);
+        return;
+      }
 
-      if (data.success) {
-        router.push('/login?message=Registration successful');
+      if (response.ok && data.success) {
+        router.push('/auth/login?message=Registration successful! Please login to continue.');
       } else {
-        setError(data.message || 'Registration failed');
+        let errorMessage = data.message || data.error?.message || `Registration failed (${response.status})`;
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          errorMessage = data.errors.join(', ');
+        }
+        setError(errorMessage);
+        console.error('Registration error:', data);
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      console.error('Registration exception:', err);
+      setError(err.message || 'Network error. Please check if the server is running.');
     } finally {
       setLoading(false);
     }
