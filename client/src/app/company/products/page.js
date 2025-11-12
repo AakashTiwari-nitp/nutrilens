@@ -2,10 +2,13 @@
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
+import { ThemeContext } from "@/context/ThemeContext";
 
 export default function CompanyProductsPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated, login } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [error, setError] = useState("");
@@ -89,14 +92,10 @@ export default function CompanyProductsPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const formDataToSend = new FormData();
-      
       Object.keys(formData).forEach(key => {
         formDataToSend.append(key, formData[key]);
       });
-      
-      if (productImage) {
-        formDataToSend.append("productImage", productImage);
-      }
+      if (productImage) formDataToSend.append("productImage", productImage);
 
       const resp = await fetch(`${apiUrl}/product/register`, {
         method: "POST",
@@ -135,7 +134,6 @@ export default function CompanyProductsPage() {
 
   const handleDelete = async (productId) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-
     try {
       setError("");
       setSuccess("");
@@ -160,35 +158,29 @@ export default function CompanyProductsPage() {
     return null;
   }
 
-  if (user?.accountStatus !== "verified") {
-    return (
-      <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Access Restricted</h2>
-            <p className="text-red-600">Only verified companies can manage products. Please request verification first.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ✅ Theme-based styles
+  const bg = theme === "dark" ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900";
+  const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
+  const borderColor = theme === "dark" ? "border-gray-700" : "border-gray-200";
+  const buttonPrimary = theme === "dark" ? "bg-blue-700 hover:bg-blue-600" : "bg-blue-600 hover:bg-blue-700";
+  const buttonDanger = theme === "dark" ? "bg-red-700 hover:bg-red-600" : "bg-red-600 hover:bg-red-700";
 
   const categories = [
-    'biscuits', 'breakfast and spreads', 'chocolates and desserts', 
-    'cold drinks and juices', 'dairy, bread and eggs', 'instant foods', 
-    'snacks', 'cakes and bakes', 'dry fruits, oil and masalas', 
-    'meat', 'rice, atta and dals', 'tea, coffee and more', 
+    'biscuits', 'breakfast and spreads', 'chocolates and desserts',
+    'cold drinks and juices', 'dairy, bread and eggs', 'instant foods',
+    'snacks', 'cakes and bakes', 'dry fruits, oil and masalas',
+    'meat', 'rice, atta and dals', 'tea, coffee and more',
     'supplements and mores'
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
+    <div className={`min-h-screen md:ml-48 ${bg} transition-colors duration-300`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Manage Products</h1>
+          <h1 className="text-2xl font-bold">Manage Products</h1>
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className={`px-4 py-2 text-white rounded-md transition-colors ${buttonPrimary}`}
           >
             Add New Product
           </button>
@@ -196,21 +188,19 @@ export default function CompanyProductsPage() {
 
         {(error || success) && (
           <div className="mb-4">
-            {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
-            {success && <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md">{success}</div>}
+            {error && <div className={`text-sm p-3 rounded-md bg-red-500/10 text-red-400 border ${borderColor}`}>{error}</div>}
+            {success && <div className={`text-sm p-3 rounded-md bg-green-500/10 text-green-400 border ${borderColor}`}>{success}</div>}
           </div>
         )}
 
         {loadingProducts ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500">Loading products...</div>
-          </div>
+          <div className="text-center py-12 text-gray-400">Loading products...</div>
         ) : products.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-gray-500 text-lg mb-4">No products found</div>
+          <div className={`${cardBg} rounded-lg shadow p-8 text-center`}>
+            <div className="text-gray-400 text-lg mb-4">No products found</div>
             <button
               onClick={() => setShowAddForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className={`px-4 py-2 text-white rounded-md ${buttonPrimary}`}
             >
               Add Your First Product
             </button>
@@ -218,7 +208,7 @@ export default function CompanyProductsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
-              <div key={product._id} className="bg-white rounded-lg shadow p-6">
+              <div key={product._id} className={`${cardBg} rounded-lg shadow p-6`}>
                 <div className="flex items-start gap-4 mb-4">
                   <img
                     src={product.productImage || "/images/nutrilens_logo.png"}
@@ -226,16 +216,18 @@ export default function CompanyProductsPage() {
                     className="w-20 h-20 object-cover rounded-md border"
                   />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
-                    <div className="text-sm text-gray-500">ID: {product.productId}</div>
-                    <div className="text-sm text-gray-500 capitalize">{product.category}</div>
-                    <div className="text-lg font-bold text-gray-900 mt-2">₹{product.price}</div>
+                    <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
+                    <div className="text-sm text-gray-400">ID: {product.productId}</div>
+                    <div className="text-sm text-gray-400 capitalize">{product.category}</div>
+                    <div className="text-lg font-bold mt-2">₹{product.price}</div>
                   </div>
                 </div>
                 <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-1">Status</div>
+                  <div className="text-sm text-gray-400 mb-1">Status</div>
                   <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                    product.isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                    product.isApproved
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-yellow-500/20 text-yellow-400"
                   }`}>
                     {product.isApproved ? "Approved" : "Pending"}
                   </div>
@@ -243,13 +235,13 @@ export default function CompanyProductsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => router.push(`/company/products/edit/${product.productId}`)}
-                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm transition-colors"
+                    className={`flex-1 px-3 py-2 text-white rounded-md text-sm ${buttonPrimary}`}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(product.productId)}
-                    className="flex-1 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm transition-colors"
+                    className={`flex-1 px-3 py-2 text-white rounded-md text-sm ${buttonDanger}`}
                   >
                     Delete
                   </button>
@@ -259,67 +251,50 @@ export default function CompanyProductsPage() {
           </div>
         )}
 
-        {/* Add Product Modal */}
+        {/* Modal Form — themed */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900">Add New Product</h2>
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className={`${cardBg} rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+              <div className={`sticky top-0 ${cardBg} border-b ${borderColor} px-6 py-4 flex items-center justify-between`}>
+                <h2 className="text-2xl font-bold">Add New Product</h2>
                 <button
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setFormData({
-                      name: "",
-                      category: "",
-                      description: "",
-                      productId: "",
-                      price: "",
-                      manufacturingDate: "",
-                      expiryDate: "",
-                      nutritionalInfo: JSON.stringify({}),
-                      ingredients: JSON.stringify([]),
-                      tags: JSON.stringify([]),
-                    });
-                    setProductImage(null);
-                    setImagePreview(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowAddForm(false)}
+                  className="text-gray-400 hover:text-gray-200"
                 >
                   ✕
                 </button>
               </div>
+
               <form onSubmit={handleAddProduct} className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    ["Product Name *", "name", "text"],
+                    ["Product ID *", "productId", "number"],
+                    ["Price (₹) *", "price", "number"],
+                    ["Manufacturing Date *", "manufacturingDate", "date"],
+                    ["Expiry Date *", "expiryDate", "date"],
+                  ].map(([label, name, type]) => (
+                    <div key={name}>
+                      <label className="block text-sm mb-1">{label}</label>
+                      <input
+                        type={type}
+                        name={name}
+                        value={formData[name]}
+                        onChange={handleInputChange}
+                        required
+                        className={`w-full border ${borderColor} rounded-md px-3 py-2 bg-transparent`}
+                      />
+                    </div>
+                  ))}
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border rounded-md px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product ID *</label>
-                    <input
-                      type="number"
-                      name="productId"
-                      value={formData.productId}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border rounded-md px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <label className="block text-sm mb-1">Category *</label>
                     <select
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
                       required
-                      className="w-full border rounded-md px-3 py-2"
+                      className={`w-full border ${borderColor} rounded-md px-3 py-2 bg-transparent`}
                     >
                       <option value="">Select Category</option>
                       {categories.map(cat => (
@@ -327,112 +302,70 @@ export default function CompanyProductsPage() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border rounded-md px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturing Date *</label>
-                    <input
-                      type="date"
-                      name="manufacturingDate"
-                      value={formData.manufacturingDate}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border rounded-md px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
-                    <input
-                      type="date"
-                      name="expiryDate"
-                      value={formData.expiryDate}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border rounded-md px-3 py-2"
-                    />
-                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                  <label className="block text-sm mb-1">Description *</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     required
                     rows={3}
-                    className="w-full border rounded-md px-3 py-2"
+                    className={`w-full border ${borderColor} rounded-md px-3 py-2 bg-transparent`}
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nutritional Info (JSON) *</label>
+                  <label className="block text-sm mb-1">Nutritional Info (JSON) *</label>
                   <textarea
                     name="nutritionalInfo"
                     value={formData.nutritionalInfo}
                     onChange={handleInputChange}
                     required
                     rows={4}
-                    className="w-full border rounded-md px-3 py-2 font-mono text-sm"
-                    placeholder='{"calories": 100, "protein": 5, ...}'
+                    className={`w-full border ${borderColor} rounded-md px-3 py-2 bg-transparent font-mono text-sm`}
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ingredients (JSON Array) *</label>
+                  <label className="block text-sm mb-1">Ingredients (JSON Array) *</label>
                   <textarea
                     name="ingredients"
                     value={formData.ingredients}
                     onChange={handleInputChange}
                     required
                     rows={3}
-                    className="w-full border rounded-md px-3 py-2 font-mono text-sm"
-                    placeholder='["ingredient1", "ingredient2", ...]'
+                    className={`w-full border ${borderColor} rounded-md px-3 py-2 bg-transparent font-mono text-sm`}
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tags (JSON Array)</label>
-                  <textarea
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleInputChange}
-                    rows={2}
-                    className="w-full border rounded-md px-3 py-2 font-mono text-sm"
-                    placeholder='["vegan", "gluten-free", ...]'
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Image *</label>
+                  <label className="block text-sm mb-1">Product Image *</label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
                     required
-                    className="w-full border rounded-md px-3 py-2"
+                    className={`w-full border ${borderColor} rounded-md px-3 py-2`}
                   />
                   {imagePreview && (
                     <img src={imagePreview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-md border" />
                   )}
                 </div>
+
                 <div className="flex gap-2 pt-4">
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    className={`flex-1 px-4 py-2 text-white rounded-md ${buttonPrimary}`}
                   >
                     {submitting ? "Submitting..." : "Submit for Approval"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    className={`px-4 py-2 rounded-md border ${borderColor}`}
                   >
                     Cancel
                   </button>

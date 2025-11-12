@@ -2,10 +2,13 @@
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
+import { ThemeContext } from "@/context/ThemeContext";
 
 export default function AdminApprovalPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated, login } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+
   const [requests, setRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [error, setError] = useState("");
@@ -37,7 +40,7 @@ export default function AdminApprovalPage() {
       } else {
         setError(data?.message || "Failed to load requests");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to load approval requests");
     } finally {
       setLoadingRequests(false);
@@ -58,25 +61,11 @@ export default function AdminApprovalPage() {
       const data = await resp.json();
       if (resp.ok && data?.success) {
         setSuccess(action === "approve" ? "Company approved successfully" : "Approval request denied");
-        // Reload requests
         await loadRequests();
-        // Update user context if needed
-        if (data?.data?.company) {
-          // Refresh current user if it was updated
-          const profileResp = await fetch(`${apiUrl}/user/profile`, {
-            credentials: "include",
-          });
-          if (profileResp.ok) {
-            const profileData = await profileResp.json();
-            if (profileData?.data?.user) {
-              login(profileData.data.user);
-            }
-          }
-        }
       } else {
         setError(data?.message || `Failed to ${action} approval`);
       }
-    } catch (err) {
+    } catch {
       setError(`Failed to ${action} approval request`);
     }
   };
@@ -85,32 +74,42 @@ export default function AdminApprovalPage() {
     return null;
   }
 
+  const bg = theme === "dark" ? "bg-gray-900" : "bg-gray-50";
+  const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
+  const textColor = theme === "dark" ? "text-gray-100" : "text-gray-900";
+  const subText = theme === "dark" ? "text-gray-400" : "text-gray-500";
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
+    <div className={`min-h-screen ${bg} ${textColor} md:ml-48 transition-colors duration-300`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Company Approval Requests</h1>
+          <h1 className="text-2xl font-bold">Company Approval Requests</h1>
         </div>
 
         {(error || success) && (
           <div className="mb-4">
-            {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
-            {success && <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md">{success}</div>}
+            {error && <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">{error}</div>}
+            {success && (
+              <div className="text-green-500 text-sm bg-green-50 dark:bg-green-900/20 p-3 rounded-md">{success}</div>
+            )}
           </div>
         )}
 
         {loadingRequests ? (
           <div className="text-center py-12">
-            <div className="text-gray-500">Loading approval requests...</div>
+            <div className={`${subText}`}>Loading approval requests...</div>
           </div>
         ) : requests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-gray-500 text-lg">No pending approval requests</div>
+          <div className={`${cardBg} rounded-lg shadow p-8 text-center transition-colors duration-300`}>
+            <div className={`${subText} text-lg`}>No pending approval requests</div>
           </div>
         ) : (
           <div className="space-y-4">
             {requests.map((company) => (
-              <div key={company._id} className="bg-white rounded-lg shadow p-6">
+              <div
+                key={company._id}
+                className={`${cardBg} rounded-lg shadow p-6 transition-colors duration-300`}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
                     <img
@@ -120,46 +119,22 @@ export default function AdminApprovalPage() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {company.fullName || company.username}
-                        </h3>
-                        <span className="text-sm text-gray-500">@{company.username}</span>
+                        <h3 className="text-lg font-semibold">{company.fullName || company.username}</h3>
+                        <span className={`text-sm ${subText}`}>@{company.username}</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                          <div className="text-sm text-gray-500">Email</div>
-                          <div className="text-gray-900">{company.email || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Mobile</div>
-                          <div className="text-gray-900">{company.mobile || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Company Registration No</div>
-                          <div className="text-gray-900">{company.companyRegistrationNo || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">GST No</div>
-                          <div className="text-gray-900">{company.gstNo || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Address</div>
-                          <div className="text-gray-900">{company.address || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Country</div>
-                          <div className="text-gray-900">{company.country || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Account Status</div>
-                          <div className="text-gray-900 capitalize">{company.accountStatus || "pending"}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Request Date</div>
-                          <div className="text-gray-900">
-                            {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "—"}
-                          </div>
-                        </div>
+                        <Info label="Email" value={company.email} subText={subText} />
+                        <Info label="Mobile" value={company.mobile} subText={subText} />
+                        <Info label="Company Registration No" value={company.companyRegistrationNo} subText={subText} />
+                        <Info label="GST No" value={company.gstNo} subText={subText} />
+                        <Info label="Address" value={company.address} subText={subText} />
+                        <Info label="Country" value={company.country} subText={subText} />
+                        <Info label="Account Status" value={company.accountStatus || "pending"} subText={subText} />
+                        <Info
+                          label="Request Date"
+                          value={company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "—"}
+                          subText={subText}
+                        />
                       </div>
                     </div>
                   </div>
@@ -187,3 +162,11 @@ export default function AdminApprovalPage() {
   );
 }
 
+function Info({ label, value, subText }) {
+  return (
+    <div>
+      <div className={`text-sm ${subText}`}>{label}</div>
+      <div className="font-medium">{value || "—"}</div>
+    </div>
+  );
+}

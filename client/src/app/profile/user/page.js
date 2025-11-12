@@ -2,14 +2,15 @@
 import { useContext, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
+import { ThemeContext } from "@/context/ThemeContext";
 import { MdVerified } from "react-icons/md";
 import { GoPencil } from "react-icons/go";
 
-function InfoRow({ label, value }) {
+function InfoRow({ label, value, subText, textColor, borderColor }) {
   return (
-    <div className="flex items-start sm:items-center justify-between py-2 border-b border-gray-100">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-gray-900 font-medium break-all max-w-[60%] text-right">
+    <div className={`flex items-start sm:items-center justify-between py-2 border-b ${borderColor}`}>
+      <span className={`${subText}`}>{label}</span>
+      <span className={`${textColor} font-medium break-all max-w-[60%] text-right`}>
         {value ?? "—"}
       </span>
     </div>
@@ -18,23 +19,12 @@ function InfoRow({ label, value }) {
 
 export default function UserProfilePage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated, login } = useContext(AuthContext);
+  const { user, loading, isAuthenticated } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [form, setForm] = useState(() => ({
-    fullName: user?.fullName ?? "",
-    email: user?.email ?? "",
-    mobile: user?.mobile ?? "",
-    address: user?.address ?? "",
-    country: user?.country ?? "",
-    dob: user?.dob ? new Date(user.dob).toISOString().slice(0, 10) : "",
-    weight: user?.weight ?? "",
-    height: user?.height ?? "",
-    gender: user?.gender ?? null,
-    isVeg: user?.isVeg ?? null,
-  }));
 
   if (!loading && (!isAuthenticated || !user)) {
     router.replace("/auth/login?message=Please login to view your profile");
@@ -51,7 +41,6 @@ export default function UserProfilePage() {
     if (userAvatar && typeof userAvatar === "string" && userAvatar.trim() !== "") {
       return userAvatar;
     }
-    // user.gender is expected to be boolean (true = Male, false = Female) or null/undefined
     if (user?.gender === true) return "/images/male-placeholder.webp";
     if (user?.gender === false) return "/images/female-placeholder.webp";
     return "/images/nutrilens_logo.png";
@@ -71,12 +60,20 @@ export default function UserProfilePage() {
   const historyCount = user?.history?.length ?? 0;
   const newsCount = user?.news?.length ?? 0;
 
-  return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Your Profile</h1>
+  // ✅ Theme colors
+  const bg = theme === "dark" ? "bg-gradient-to-b from-black via-gray-900 to-gray-800" : "bg-gray-50";
+  const cardBg = theme === "dark" ? "bg-gray-900" : "bg-white";
+  const sectionBg = theme === "dark" ? "bg-gray-800" : "bg-gray-50";
+  const textColor = theme === "dark" ? "text-gray-100" : "text-gray-900";
+  const subText = theme === "dark" ? "text-gray-400" : "text-gray-500";
+  const borderColor = theme === "dark" ? "border-gray-700" : "border-gray-100";
 
-        <div className="bg-white rounded-lg shadow p-6">
+  return (
+    <div className={`min-h-screen ${bg} ${textColor} transition-colors duration-300`}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <h1 className={`text-2xl font-bold mb-6 ${textColor}`}>Your Profile</h1>
+
+        <div className={`${cardBg} rounded-lg shadow p-6`}>
           <div className="flex items-center gap-4 mb-6">
             <img
               src={avatarSrc}
@@ -84,19 +81,24 @@ export default function UserProfilePage() {
               className="w-16 h-16 rounded-full object-cover border"
             />
             <div>
-              <div className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <div className={`text-xl font-semibold flex items-center gap-2 ${textColor}`}>
                 {user?.fullName ?? user?.username ?? "User"}
               </div>
               <div className="flex items-center gap-2">
-                <div className="text-gray-500">@{user?.username}</div>
+                <div className={`${subText}`}>@{user?.username}</div>
+
                 {user?.accountStatus === "verified" && (
                   <>
-                    <span title="Verified" className="text-green-600 inline-flex items-center">
+                    <span title="Verified" className="text-green-500 inline-flex items-center">
                       <MdVerified className="h-5 w-5" />
                     </span>
                     <button
                       onClick={() => router.push("/auth/approve")}
-                      className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded hover:bg-blue-200"
+                      className={`ml-2 text-sm px-2 py-1 border rounded transition ${
+                        theme === "dark"
+                          ? "bg-gray-800 border-gray-700 text-blue-300 hover:bg-gray-700"
+                          : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                      }`}
                     >
                       Apply for Approval
                     </button>
@@ -104,14 +106,19 @@ export default function UserProfilePage() {
                 )}
 
                 {user?.accountStatus === "approved" && (
-                  <span title="Approved" className="text-green-600 inline-flex items-center">
+                  <span title="Approved" className="text-green-500 inline-flex items-center">
                     <MdVerified className="h-5 w-5" />
                   </span>
                 )}
+
                 {user?.accountStatus === "pending" && (
                   <button
                     onClick={() => router.push("/auth/verify")}
-                    className="ml-2 text-sm px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded hover:bg-blue-200"
+                    className={`ml-2 text-sm px-2 py-1 border rounded transition ${
+                      theme === "dark"
+                        ? "bg-gray-800 border-gray-700 text-blue-300 hover:bg-gray-700"
+                        : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                    }`}
                   >
                     Get Verified
                   </button>
@@ -119,67 +126,78 @@ export default function UserProfilePage() {
               </div>
             </div>
 
-            {/* improved edit button */}
             <button
               type="button"
               onClick={() => router.push("/profile/edit")}
               aria-label="Edit profile"
-              className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-200"
+              className={`ml-auto inline-flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm transition ${
+                theme === "dark"
+                  ? "text-gray-300 border-gray-700 hover:bg-gray-800"
+                  : "text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
             >
               <GoPencil className="h-4 w-4" />
               <span className="hidden sm:inline">Edit</span>
             </button>
-
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Account</h2>
-              <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Role" value={user?.role} />
-                <InfoRow label="Email" value={user?.email} />
-                <InfoRow label="Mobile" value={user?.mobile} />
-                <InfoRow label="Account Status" value={user?.accountStatus} />
+              <h2 className={`text-sm font-semibold mb-3 ${subText}`}>Account</h2>
+              <div className={`${sectionBg} rounded-md p-4`}>
+                <InfoRow label="Role" value={user?.role} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="Email" value={user?.email} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="Mobile" value={user?.mobile} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="Account Status" value={user?.accountStatus} subText={subText} textColor={textColor} borderColor={borderColor} />
               </div>
             </div>
+
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Personal</h2>
-              <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Full Name" value={user?.fullName} />
-                <InfoRow label="DOB" value={dobText} />
-                <InfoRow label="Gender" value={genderText} />
-                <InfoRow label="Vegetarian" value={user?.isVeg === undefined ? "—" : (user?.isVeg ? "Yes" : "No")} />
+              <h2 className={`text-sm font-semibold mb-3 ${subText}`}>Personal</h2>
+              <div className={`${sectionBg} rounded-md p-4`}>
+                <InfoRow label="Full Name" value={user?.fullName} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="DOB" value={dobText} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="Gender" value={genderText} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow
+                  label="Vegetarian"
+                  value={user?.isVeg === undefined ? "—" : user?.isVeg ? "Yes" : "No"}
+                  subText={subText}
+                  textColor={textColor}
+                  borderColor={borderColor}
+                />
               </div>
             </div>
+
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Contact</h2>
-              <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Address" value={user?.address} />
-                <InfoRow label="Country" value={user?.country} />
+              <h2 className={`text-sm font-semibold mb-3 ${subText}`}>Contact</h2>
+              <div className={`${sectionBg} rounded-md p-4`}>
+                <InfoRow label="Address" value={user?.address} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="Country" value={user?.country} subText={subText} textColor={textColor} borderColor={borderColor} />
               </div>
             </div>
+
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Body Metrics</h2>
-              <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Weight (kg)" value={user?.weight} />
-                <InfoRow label="Height (cm)" value={user?.height} />
-                <InfoRow label="BMI" value={user?.bmi?.toFixed ? user.bmi.toFixed(2) : user?.bmi} />
+              <h2 className={`text-sm font-semibold mb-3 ${subText}`}>Body Metrics</h2>
+              <div className={`${sectionBg} rounded-md p-4`}>
+                <InfoRow label="Weight (kg)" value={user?.weight} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="Height (cm)" value={user?.height} subText={subText} textColor={textColor} borderColor={borderColor} />
+                <InfoRow label="BMI" value={user?.bmi?.toFixed ? user.bmi.toFixed(2) : user?.bmi} subText={subText} textColor={textColor} borderColor={borderColor} />
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
-            <div className="bg-gray-50 rounded-md p-4">
-              <div className="text-sm text-gray-500 mb-1">Favourites</div>
-              <div className="text-2xl font-bold">{favouritesCount}</div>
+            <div className={`${sectionBg} rounded-md p-4`}>
+              <div className={`text-sm mb-1 ${subText}`}>Favourites</div>
+              <div className={`text-2xl font-bold ${textColor}`}>{favouritesCount}</div>
             </div>
-            <div className="bg-gray-50 rounded-md p-4">
-              <div className="text-sm text-gray-500 mb-1">History</div>
-              <div className="text-2xl font-bold">{historyCount}</div>
+            <div className={`${sectionBg} rounded-md p-4`}>
+              <div className={`text-sm mb-1 ${subText}`}>History</div>
+              <div className={`text-2xl font-bold ${textColor}`}>{historyCount}</div>
             </div>
-            <div className="bg-gray-50 rounded-md p-4">
-              <div className="text-sm text-gray-500 mb-1">News Subscriptions</div>
-              <div className="text-2xl font-bold">{newsCount}</div>
+            <div className={`${sectionBg} rounded-md p-4`}>
+              <div className={`text-sm mb-1 ${subText}`}>News Subscriptions</div>
+              <div className={`text-2xl font-bold ${textColor}`}>{newsCount}</div>
             </div>
           </div>
         </div>
@@ -187,5 +205,3 @@ export default function UserProfilePage() {
     </div>
   );
 }
-
-

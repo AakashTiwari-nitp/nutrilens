@@ -2,12 +2,13 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
+import { ThemeContext } from "@/context/ThemeContext";
 
-function InfoRow({ label, value }) {
+function InfoRow({ label, value, textColor, subText, borderColor }) {
   return (
-    <div className="flex items-start sm:items-center justify-between py-2 border-b border-gray-100">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-gray-900 font-medium break-all max-w-[60%] text-right">
+    <div className={`flex items-start sm:items-center justify-between py-2 border-b ${borderColor}`}>
+      <span className={`${subText}`}>{label}</span>
+      <span className={`${textColor} font-medium break-all max-w-[60%] text-right`}>
         {value ?? "—"}
       </span>
     </div>
@@ -17,6 +18,7 @@ function InfoRow({ label, value }) {
 export default function CompanyProfilePage() {
   const router = useRouter();
   const { user, loading, isAuthenticated, login } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
   const [products, setProducts] = useState([]);
   const [prodLoading, setProdLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
@@ -80,10 +82,7 @@ export default function CompanyProfilePage() {
       const data = await resp.json();
       if (resp.ok && data?.success) {
         setMessage({ type: "success", text: "Approval request submitted successfully" });
-        // Refresh user data
-        const profileResp = await fetch(`${apiUrl}/user/profile`, {
-          credentials: "include",
-        });
+        const profileResp = await fetch(`${apiUrl}/user/profile`, { credentials: "include" });
         if (profileResp.ok) {
           const profileData = await profileResp.json();
           if (profileData?.data?.user) {
@@ -93,33 +92,52 @@ export default function CompanyProfilePage() {
       } else {
         setMessage({ type: "error", text: data?.message || "Failed to submit approval request" });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Failed to submit approval request" });
     } finally {
       setRequesting(false);
     }
   };
 
+  // ✅ Theme-based styles
+  const bg = theme === "dark" ? "bg-gradient-to-b from-black via-gray-900 to-gray-800" : "bg-gray-50";
+  const cardBg = theme === "dark" ? "bg-gray-900" : "bg-white";
+  const sectionBg = theme === "dark" ? "bg-gray-800" : "bg-gray-50";
+  const textColor = theme === "dark" ? "text-gray-100" : "text-gray-900";
+  const subText = theme === "dark" ? "text-gray-400" : "text-gray-500";
+  const borderColor = theme === "dark" ? "border-gray-700" : "border-gray-100";
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
+    <div className={`min-h-screen ${bg} ${textColor} md:ml-48 transition-colors duration-300`}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Company Profile</h1>
+        <h1 className={`text-2xl font-bold mb-6 ${textColor}`}>Company Profile</h1>
+
         <div className="mb-4 flex gap-2">
           <button
             onClick={() => router.push("/profile/edit")}
-            className="text-sm px-4 py-2 border rounded-md hover:bg-gray-50"
+            className={`text-sm px-4 py-2 border rounded-md transition ${
+              theme === "dark"
+                ? "border-gray-700 hover:bg-gray-800 text-gray-100"
+                : "border-gray-300 hover:bg-gray-50 text-gray-900"
+            }`}
           >
             Edit Profile
           </button>
+
           {user?.accountStatus !== "verified" && !user?.approvalRequested && (
             <button
               onClick={handleRequestApproval}
               disabled={requesting}
-              className="text-sm px-4 py-2 bg-black text-white rounded-md hover:bg-gray-600 disabled:opacity-50"
+              className={`text-sm px-4 py-2 rounded-md transition ${
+                theme === "dark"
+                  ? "bg-blue-600 text-white hover:bg-blue-500"
+                  : "bg-black text-white hover:bg-gray-700"
+              } disabled:opacity-50`}
             >
               {requesting ? "Submitting..." : "Request Approval"}
             </button>
           )}
+
           {user?.approvalRequested && (
             <button
               disabled
@@ -129,15 +147,20 @@ export default function CompanyProfilePage() {
             </button>
           )}
         </div>
+
         {message.text && (
-          <div className={`mb-4 p-3 rounded-md ${
-            message.type === "success" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-          }`}>
+          <div
+            className={`mb-4 p-3 rounded-md ${
+              message.type === "success"
+                ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+                : "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className={`${cardBg} rounded-lg shadow p-6 mb-8`}>
           <div className="flex items-center gap-4 mb-6">
             <img
               src={user?.avatar || "/images/nutrilens_logo.png"}
@@ -145,61 +168,62 @@ export default function CompanyProfilePage() {
               className="w-16 h-16 rounded-full object-cover border"
             />
             <div>
-              <div className="text-xl font-semibold text-gray-900">
+              <div className={`text-xl font-semibold ${textColor}`}>
                 {user?.fullName ?? user?.username ?? "Company"}
               </div>
-              <div className="text-gray-500">@{user?.username}</div>
+              <div className={`${subText}`}>@{user?.username}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Account</h2>
-              <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Role" value={user?.role} />
-                <InfoRow label="Email" value={user?.email} />
-                <InfoRow label="Mobile" value={user?.mobile} />
-                <InfoRow label="Account Status" value={user?.accountStatus}/>
+              <h2 className={`text-sm font-semibold mb-3 ${subText}`}>Account</h2>
+              <div className={`${sectionBg} rounded-md p-4`}>
+                <InfoRow label="Role" value={user?.role} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="Email" value={user?.email} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="Mobile" value={user?.mobile} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="Account Status" value={user?.accountStatus} textColor={textColor} subText={subText} borderColor={borderColor} />
               </div>
             </div>
+
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Company Details</h2>
-              <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Company Name" value={user?.fullName} />
-                <InfoRow label="Address" value={user?.address} />
-                <InfoRow label="Country" value={user?.country} />
-                <InfoRow label="Company Registration No" value={user?.companyRegistrationNo} />
-                <InfoRow label="GST No" value={user?.gstNo} />
+              <h2 className={`text-sm font-semibold mb-3 ${subText}`}>Company Details</h2>
+              <div className={`${sectionBg} rounded-md p-4`}>
+                <InfoRow label="Company Name" value={user?.fullName} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="Address" value={user?.address} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="Country" value={user?.country} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="Company Registration No" value={user?.companyRegistrationNo} textColor={textColor} subText={subText} borderColor={borderColor} />
+                <InfoRow label="GST No" value={user?.gstNo} textColor={textColor} subText={subText} borderColor={borderColor} />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className={`${cardBg} rounded-lg shadow p-6`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Products</h2>
-            <div className="text-sm text-gray-500">
+            <h2 className={`text-lg font-semibold ${textColor}`}>Products</h2>
+            <div className={`text-sm ${subText}`}>
               {prodLoading ? "Loading..." : `${products.length} total`}
             </div>
           </div>
 
           {prodLoading ? (
-            <div className="text-gray-500">Fetching products...</div>
+            <div className={`${subText}`}>Fetching products...</div>
           ) : products.length === 0 ? (
-            <div className="text-gray-500">No products found.</div>
+            <div className={`${subText}`}>No products found.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map((p) => (
-                <div key={p._id} className="border rounded-md p-4">
+                <div key={p._id} className={`${sectionBg} border ${borderColor} rounded-md p-4`}>
                   <div className="flex items-center gap-3 mb-2">
                     <img
                       src={p.productImage || "/images/nutrilens_logo.png"}
                       alt={p.name}
                       className="w-12 h-12 object-cover rounded-md border"
                     />
-                    <div className="font-semibold">{p.name}</div>
+                    <div className={`font-semibold ${textColor}`}>{p.name}</div>
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className={`text-sm ${subText}`}>
                     <div>Category: {p.category ?? "—"}</div>
                     <div>Price: {p.price ?? "—"}</div>
                     <div>Status: {p.isApproved ? "Approved" : "Pending"}</div>
@@ -213,5 +237,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-
-

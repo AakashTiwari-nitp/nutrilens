@@ -2,27 +2,25 @@
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
+import { ThemeContext } from "@/context/ThemeContext";
 
 export default function AdminVerificationPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated, login } = useContext(AuthContext);
-  
-  // Tab state
+  const { user, loading, isAuthenticated } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+
   const [activeTab, setActiveTab] = useState("company-requests");
-  
-  // Company states
+
   const [companyRequests, setCompanyRequests] = useState([]);
   const [companyList, setCompanyList] = useState([]);
   const [loadingCompanyRequests, setLoadingCompanyRequests] = useState(true);
   const [loadingCompanyList, setLoadingCompanyList] = useState(true);
-  
-  // Product states
+
   const [productRequests, setProductRequests] = useState([]);
   const [productList, setProductList] = useState([]);
   const [loadingProductRequests, setLoadingProductRequests] = useState(true);
   const [loadingProductList, setLoadingProductList] = useState(true);
-  
-  // Messages
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -34,34 +32,23 @@ export default function AdminVerificationPage() {
 
   useEffect(() => {
     if (user?.role === "admin") {
-      if (activeTab === "company-requests") {
-        loadCompanyRequests();
-      } else if (activeTab === "company-list") {
-        loadCompanyList();
-      } else if (activeTab === "product-requests") {
-        loadProductRequests();
-      } else if (activeTab === "product-list") {
-        loadProductList();
-      }
+      if (activeTab === "company-requests") loadCompanyRequests();
+      else if (activeTab === "company-list") loadCompanyList();
+      else if (activeTab === "product-requests") loadProductRequests();
+      else if (activeTab === "product-list") loadProductList();
     }
   }, [user, activeTab]);
 
-  // Company Functions
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
   const loadCompanyRequests = async () => {
     try {
       setLoadingCompanyRequests(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const resp = await fetch(`${apiUrl}/user/pending-verifications`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const resp = await fetch(`${apiUrl}/user/pending-verifications`, { credentials: "include" });
       const data = await resp.json();
-      if (resp.ok && data?.success) {
-        setCompanyRequests(data?.data?.requests || []);
-      } else {
-        setError(data?.message || "Failed to load requests");
-      }
-    } catch (err) {
+      if (resp.ok && data?.success) setCompanyRequests(data.data?.requests || []);
+      else setError(data?.message || "Failed to load requests");
+    } catch {
       setError("Failed to load company requests");
     } finally {
       setLoadingCompanyRequests(false);
@@ -71,18 +58,11 @@ export default function AdminVerificationPage() {
   const loadCompanyList = async () => {
     try {
       setLoadingCompanyList(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const resp = await fetch(`${apiUrl}/user/approved-companies`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const resp = await fetch(`${apiUrl}/user/approved-companies`, { credentials: "include" });
       const data = await resp.json();
-      if (resp.ok && data?.success) {
-        setCompanyList(data?.data?.companies || []);
-      } else {
-        setError(data?.message || "Failed to load companies");
-      }
-    } catch (err) {
+      if (resp.ok && data?.success) setCompanyList(data.data?.companies || []);
+      else setError(data?.message || "Failed to load companies");
+    } catch {
       setError("Failed to load company list");
     } finally {
       setLoadingCompanyList(false);
@@ -93,7 +73,6 @@ export default function AdminVerificationPage() {
     try {
       setError("");
       setSuccess("");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const resp = await fetch(`${apiUrl}/user/handle-verification`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,26 +81,20 @@ export default function AdminVerificationPage() {
       });
       const data = await resp.json();
       if (resp.ok && data?.success) {
-        setSuccess(action === "approve" ? "Company verified successfully" : "Verification request denied");
+        setSuccess(action === "approve" ? "Company verified successfully" : "Verification denied");
         await loadCompanyRequests();
-        if (action === "approve") {
-          await loadCompanyList();
-        }
-      } else {
-        setError(data?.message || `Failed to ${action} verification`);
-      }
-    } catch (err) {
-      setError(`Failed to ${action} verification request`);
+        if (action === "approve") await loadCompanyList();
+      } else setError(data?.message || "Failed to verify company");
+    } catch {
+      setError("Request failed");
     }
   };
 
   const handleRemoveCompany = async (companyId) => {
     if (!confirm("Are you sure you want to remove this company's verification?")) return;
-    
     try {
       setError("");
       setSuccess("");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const resp = await fetch(`${apiUrl}/user/remove-approval`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,32 +103,22 @@ export default function AdminVerificationPage() {
       });
       const data = await resp.json();
       if (resp.ok && data?.success) {
-        setSuccess("Company verification removed successfully");
+        setSuccess("Company verification removed");
         await loadCompanyList();
-      } else {
-        setError(data?.message || "Failed to remove verification");
-      }
-    } catch (err) {
-      setError("Failed to remove company verification");
+      } else setError(data?.message || "Failed to remove verification");
+    } catch {
+      setError("Failed to remove verification");
     }
   };
 
-  // Product Functions
   const loadProductRequests = async () => {
     try {
       setLoadingProductRequests(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const resp = await fetch(`${apiUrl}/product/pending-approvals`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const resp = await fetch(`${apiUrl}/product/pending-approvals`, { credentials: "include" });
       const data = await resp.json();
-      if (resp.ok && data?.success) {
-        setProductRequests(data?.data?.products || []);
-      } else {
-        setError(data?.message || "Failed to load product requests");
-      }
-    } catch (err) {
+      if (resp.ok && data?.success) setProductRequests(data.data?.products || []);
+      else setError(data?.message || "Failed to load product requests");
+    } catch {
       setError("Failed to load product requests");
     } finally {
       setLoadingProductRequests(false);
@@ -165,19 +128,12 @@ export default function AdminVerificationPage() {
   const loadProductList = async () => {
     try {
       setLoadingProductList(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const resp = await fetch(`${apiUrl}/product/approved-products`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const resp = await fetch(`${apiUrl}/product/approved-products`, { credentials: "include" });
       const data = await resp.json();
-      if (resp.ok && data?.success) {
-        setProductList(data?.data?.products || []);
-      } else {
-        setError(data?.message || "Failed to load products");
-      }
-    } catch (err) {
-      setError("Failed to load product list");
+      if (resp.ok && data?.success) setProductList(data.data?.products || []);
+      else setError(data?.message || "Failed to load products");
+    } catch {
+      setError("Failed to load products");
     } finally {
       setLoadingProductList(false);
     }
@@ -187,7 +143,6 @@ export default function AdminVerificationPage() {
     try {
       setError("");
       setSuccess("");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const resp = await fetch(`${apiUrl}/product/handle-approval`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -196,26 +151,20 @@ export default function AdminVerificationPage() {
       });
       const data = await resp.json();
       if (resp.ok && data?.success) {
-        setSuccess(action === "approve" ? "Product approved successfully" : "Product approval denied");
+        setSuccess(action === "approve" ? "Product approved" : "Product denied");
         await loadProductRequests();
-        if (action === "approve") {
-          await loadProductList();
-        }
-      } else {
-        setError(data?.message || `Failed to ${action} product`);
-      }
-    } catch (err) {
-      setError(`Failed to ${action} product approval`);
+        if (action === "approve") await loadProductList();
+      } else setError(data?.message || "Failed to approve product");
+    } catch {
+      setError("Product approval failed");
     }
   };
 
   const handleRemoveProduct = async (productId) => {
     if (!confirm("Are you sure you want to remove this product?")) return;
-    
     try {
       setError("");
       setSuccess("");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const resp = await fetch(`${apiUrl}/product/remove-approval`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -224,338 +173,145 @@ export default function AdminVerificationPage() {
       });
       const data = await resp.json();
       if (resp.ok && data?.success) {
-        setSuccess("Product removed successfully");
+        setSuccess("Product removed");
         await loadProductList();
-      } else {
-        setError(data?.message || "Failed to remove product");
-      }
-    } catch (err) {
+      } else setError(data?.message || "Failed to remove product");
+    } catch {
       setError("Failed to remove product");
     }
   };
 
-  if (!loading && (!isAuthenticated || !user || user.role !== "admin")) {
-    return null;
-  }
+  if (!loading && (!isAuthenticated || !user || user.role !== "admin")) return null;
 
-  const tabs = [
-    { id: "company-requests", label: "Company Requests" },
-    { id: "company-list", label: "Company List" },
-    { id: "product-requests", label: "Product Requests" },
-    { id: "product-list", label: "Product List" },
-  ];
+  const bg = theme === "dark" ? "bg-gray-900" : "bg-gray-50";
+  const card = theme === "dark" ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900";
+  const textMuted = theme === "dark" ? "text-gray-400" : "text-gray-500";
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
+    <div className={`min-h-screen ${bg} transition-colors duration-300 md:ml-48`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Verification</h1>
+        <h1 className={`text-2xl font-bold mb-6 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          Admin Verification
+        </h1>
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex space-x-8">
-            {tabs.map((tab) => (
+            {["company-requests", "company-list", "product-requests", "product-list"].map((id) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                key={id}
+                onClick={() => setActiveTab(id)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  activeTab === id
+                    ? "border-blue-500 text-blue-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
               >
-                {tab.label}
+                {id.replace("-", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
               </button>
             ))}
           </nav>
         </div>
 
-        {/* Messages */}
         {(error || success) && (
           <div className="mb-4">
-            {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
-            {success && <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md">{success}</div>}
+            {error && <div className="text-red-500 bg-red-100 dark:bg-red-900/30 p-3 rounded">{error}</div>}
+            {success && <div className="text-green-500 bg-green-100 dark:bg-green-900/30 p-3 rounded">{success}</div>}
           </div>
         )}
 
-        {/* Company Requests Tab */}
-        {activeTab === "company-requests" && (
-          <>
-            {loadingCompanyRequests ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500">Loading company requests...</div>
-              </div>
-            ) : companyRequests.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <div className="text-gray-500 text-lg">No pending company verification requests</div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {companyRequests.map((company) => (
-                  <div key={company._id} className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        <img
-                          src={company.avatar || "/images/nutrilens_logo.png"}
-                          alt={company.fullName}
-                          className="w-16 h-16 rounded-full object-cover border"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {company.fullName || company.username}
-                            </h3>
-                            <span className="text-sm text-gray-500">@{company.username}</span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <div className="text-sm text-gray-500">Email</div>
-                              <div className="text-gray-900">{company.email || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Mobile</div>
-                              <div className="text-gray-900">{company.mobile || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Company Registration No</div>
-                              <div className="text-gray-900">{company.companyRegistrationNo || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">GST No</div>
-                              <div className="text-gray-900">{company.gstNo || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Address</div>
-                              <div className="text-gray-900">{company.address || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Country</div>
-                              <div className="text-gray-900">{company.country || "—"}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <button
-                          onClick={() => handleCompanyApproval(company._id, "approve")}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleCompanyApproval(company._id, "deny")}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                        >
-                          Deny
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Company List Tab */}
-        {activeTab === "company-list" && (
-          <>
-            {loadingCompanyList ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500">Loading verified companies...</div>
-              </div>
-            ) : companyList.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <div className="text-gray-500 text-lg">No verified companies</div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {companyList.map((company) => (
-                  <div key={company._id} className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        <img
-                          src={company.avatar || "/images/nutrilens_logo.png"}
-                          alt={company.fullName}
-                          className="w-16 h-16 rounded-full object-cover border"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {company.fullName || company.username}
-                            </h3>
-                            <span className="text-sm text-gray-500">@{company.username}</span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <div className="text-sm text-gray-500">Email</div>
-                              <div className="text-gray-900">{company.email || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Mobile</div>
-                              <div className="text-gray-900">{company.mobile || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Company Registration No</div>
-                              <div className="text-gray-900">{company.companyRegistrationNo || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">GST No</div>
-                              <div className="text-gray-900">{company.gstNo || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Address</div>
-                              <div className="text-gray-900">{company.address || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Country</div>
-                              <div className="text-gray-900">{company.country || "—"}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <button
-                          onClick={() => handleRemoveCompany(company._id)}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Product Requests Tab */}
-        {activeTab === "product-requests" && (
-          <>
-            {loadingProductRequests ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500">Loading product requests...</div>
-              </div>
-            ) : productRequests.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <div className="text-gray-500 text-lg">No pending product approval requests</div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {productRequests.map((product) => (
-                  <div key={product._id} className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        <img
-                          src={product.productImage || "/images/nutrilens_logo.png"}
-                          alt={product.name}
-                          className="w-20 h-20 object-cover rounded-md border"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                            <span className="text-sm text-gray-500">ID: {product.productId}</span>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <div className="text-sm text-gray-500">Category</div>
-                              <div className="text-gray-900 capitalize">{product.category || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Price</div>
-                              <div className="text-gray-900">₹{product.price || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Company</div>
-                              <div className="text-gray-900">
-                                {product.companyId?.fullName || product.companyId?.username || "—"}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Description</div>
-                              <div className="text-gray-900 line-clamp-2">{product.description || "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Manufacturing Date</div>
-                              <div className="text-gray-900">
-                                {product.manufacturingDate ? new Date(product.manufacturingDate).toLocaleDateString() : "—"}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-500">Expiry Date</div>
-                              <div className="text-gray-900">
-                                {product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : "—"}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <button
-                          onClick={() => handleProductApproval(product._id, "approve")}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleProductApproval(product._id, "deny")}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                        >
-                          Deny
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Product List Tab */}
-        {activeTab === "product-list" && (
-          <>
-            {loadingProductList ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500">Loading approved products...</div>
-              </div>
-            ) : productList.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <div className="text-gray-500 text-lg">No approved products</div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {productList.map((product) => (
-                  <div key={product._id} className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <img
-                        src={product.productImage || "/images/nutrilens_logo.png"}
-                        alt={product.name}
-                        className="w-20 h-20 object-cover rounded-md border"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
-                        <div className="text-sm text-gray-500">ID: {product.productId}</div>
-                        <div className="text-sm text-gray-500 capitalize">{product.category}</div>
-                        <div className="text-lg font-bold text-gray-900 mt-2">₹{product.price}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          By: {product.companyId?.fullName || product.companyId?.username || "—"}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveProduct(product._id)}
-                      className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        {/* Dynamic tab content */}
+        <div className={`${card} p-4 rounded-lg shadow transition-colors duration-300`}>
+          {activeTab === "company-requests" && (
+            <TabContent
+              items={companyRequests}
+              loading={loadingCompanyRequests}
+              emptyText="No pending company verification requests"
+              textMuted={textMuted}
+              onApprove={(id) => handleCompanyApproval(id, "approve")}
+              onDeny={(id) => handleCompanyApproval(id, "deny")}
+            />
+          )}
+          {activeTab === "company-list" && (
+            <TabContent
+              items={companyList}
+              loading={loadingCompanyList}
+              emptyText="No verified companies"
+              textMuted={textMuted}
+              onRemove={handleRemoveCompany}
+            />
+          )}
+          {activeTab === "product-requests" && (
+            <TabContent
+              items={productRequests}
+              loading={loadingProductRequests}
+              emptyText="No pending product approval requests"
+              textMuted={textMuted}
+              onApprove={(id) => handleProductApproval(id, "approve")}
+              onDeny={(id) => handleProductApproval(id, "deny")}
+            />
+          )}
+          {activeTab === "product-list" && (
+            <TabContent
+              items={productList}
+              loading={loadingProductList}
+              emptyText="No approved products"
+              textMuted={textMuted}
+              onRemove={handleRemoveProduct}
+            />
+          )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function TabContent({ items, loading, emptyText, textMuted, onApprove, onDeny, onRemove }) {
+  if (loading)
+    return <div className={`text-center py-12 ${textMuted}`}>Loading...</div>;
+  if (items.length === 0)
+    return <div className={`text-center py-12 ${textMuted}`}>{emptyText}</div>;
+
+  return (
+    <div className="space-y-4">
+      {items.map((item) => (
+        <div key={item._id} className="border border-gray-300 dark:border-gray-700 rounded-lg p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-semibold">{item.name || item.fullName || "Unnamed"}</h3>
+              <p className={`text-sm ${textMuted}`}>
+                {item.email || item.category || item.productId || "—"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {onApprove && (
+                <button
+                  onClick={() => onApprove(item._id)}
+                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Approve
+                </button>
+              )}
+              {onDeny && (
+                <button
+                  onClick={() => onDeny(item._id)}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Deny
+                </button>
+              )}
+              {onRemove && (
+                <button
+                  onClick={() => onRemove(item._id)}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
