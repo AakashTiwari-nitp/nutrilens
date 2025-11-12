@@ -6,7 +6,7 @@ import Image from "next/image";
 
 import { ThemeContext } from "../context/ThemeContext";
 import { AuthContext } from "../context/AuthContext";
-import { FaBars, FaTimes, FaChevronDown, FaChevronUp, FaUser, FaSignOutAlt, FaShieldAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaChevronDown, FaChevronUp, FaUser, FaSignOutAlt, FaShieldAlt, FaBox } from "react-icons/fa";
 import navItems from "./NavItems.js";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
@@ -202,6 +202,20 @@ const Sidebar = () => {
               )}
             </ul>
           </nav>
+
+                        {/* Company-only product management link */}
+                        {user?.role === "company" && user?.accountStatus === "verified" && (
+                <li>
+                  <Link
+                    href="/company/products"
+                    className="flex items-center gap-2 p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
+                    onClick={closeSidebar}
+                  >
+                    <FaBox size={18} />
+                    My Products
+                  </Link>
+                </li>
+              )}
 
           {/* Spacer pushes remaining items to bottom */}
           <div className="grow" />

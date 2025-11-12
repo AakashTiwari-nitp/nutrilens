@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct } from "../controllers/product.controller.js";
 import { getAllProducts, getProductById, getProductRatingByMLModel, registerProduct, updateProductDetails, updateProductImage } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -20,6 +21,11 @@ router.route("/update-image/:productId").patch(
 router.route("/update-product/:productId").patch(
     authenticateUser,
     updateProductDetails
+)
+
+router.route("/delete/:productId").delete(
+    authenticateUser,
+    deleteProduct
 )
 
 router.get("/get-products", getAllProducts);

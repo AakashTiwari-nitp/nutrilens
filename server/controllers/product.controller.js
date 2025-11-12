@@ -6,6 +6,7 @@ import { User } from "../models/user.model.js";
 import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from "../utils/ImageKit.js";
 import { getUserById, getUserDetailsById } from "./user.controller.js";
 
+
 export const getProductById = asyncHandler(async (req, res, next) => {
     // console.log("Fetching product by ID", req.params.productId);
     const { productId } = req.params;
@@ -48,7 +49,7 @@ export const registerProduct = asyncHandler(async (req, res, next) => {
 
     const user = await getUserDetailsById(req.user?._id);
 
-    if (user.role !== 'company' || user.accountStatus !== 'approved') {
+    if (user.role !== 'company' || user.accountStatus !== 'verified') {
         throw new ApiError(403, "Only approved companies can register products");
     }
 
@@ -177,6 +178,45 @@ export const updateProductImage = asyncHandler(async (req, res, next) => {
     );
 });
 
+export const deleteProduct = asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+
+    const product = await getProductDetailsByProductId(productId);
+    const user = await getUserDetailsById(req.user?._id);
+
+    if (user.role !== 'company' || user.accountStatus !== 'verified') {
+        throw new ApiError(403, "Only verified companies can delete products");
+    }
+
+    if (product.companyId.toString() !== user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to delete this product");
+    }
+
+    // Delete product image from ImageKit
+    const oldImageFileId = await getFileIdFromUrl(product.productImage);
+    if (oldImageFileId) {
+        await deleteFromImageKit(oldImageFileId);
+    }
+
+    // Remove product from user's products array
+    await User.findByIdAndUpdate(
+        user._id,
+        { $pull: { products: product._id } },
+        { new: true }
+    );
+
+    // Delete the product
+    await Product.findByIdAndDelete(product._id);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {},
+            "Product deleted successfully"
+        )
+    );
+});
+
 export const updateProductDetails = asyncHandler(async (req, res, next) => {
     const { productId } = req.params;
 
@@ -245,6 +285,8 @@ export const updateProductDetails = asyncHandler(async (req, res, next) => {
             "Product details updated successfully"
         )
     );
+
+    
 
 });
 
