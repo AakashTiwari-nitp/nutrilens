@@ -6,23 +6,6 @@ import { User } from "../models/user.model.js";
 import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from "../utils/ImageKit.js";
 import { getUserById, getUserDetailsById } from "./user.controller.js";
 
-
-const product = await Product.create({
-    name,
-    category,
-    productId,
-    description,
-    nutritionalInfo: JSON.parse(nutritionalInfo),
-    ingredients: JSON.parse(ingredients),
-    manufacturingDate,
-    expiryDate,
-    price,
-    tags: tags ? JSON.parse(tags) : [],
-    productImage: productImage.url,
-    companyId: user._id,
-    isApproved: false, // Products need admin approval
-});
-
 export const getProductById = asyncHandler(async (req, res, next) => {
     // console.log("Fetching product by ID", req.params.productId);
     const { productId } = req.params;
@@ -304,4 +287,42 @@ export const updateProductDetails = asyncHandler(async (req, res, next) => {
 
     
 
+});
+
+export const getProductRatingByMLModel = asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+
+    const product = await getProductDetailsByProductId(productId);
+    const nutritionalInfo = product.nutritionalInfo;
+
+    // console.log("Nutritional Info:", nutritionalInfo);
+
+    try {
+        const response = await fetch(process.env.ML_MODEL_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(nutritionalInfo),
+        });
+
+        if (!response.ok) {
+            throw new ApiError(response.status, "Failed to fetch product rating from ML model");
+        }
+
+        const data = await response.json();
+        // console.log("ML Model Response:", data);
+
+        if (!data || typeof data.rating === "undefined") {
+            throw new ApiError(500, "Invalid response from ML model");
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, { rating: data.rating, diseases: data.predicted_disease }, "Product rating fetched successfully")
+        );
+
+    } catch (error) {
+        console.error("Error fetching rating from ML model:", error);
+        return next(new ApiError(500, "Failed to fetch product rating from ML model"));
+    }
 });
