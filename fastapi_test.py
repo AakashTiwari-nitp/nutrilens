@@ -76,3 +76,6 @@ def predict(request: Content):
     }
 
     return {"rating": rating, "predicted_disease": disease_map.get(disease_code, "None")}
+@app.get('/health')
+def health():
+  return "server is running properly"
