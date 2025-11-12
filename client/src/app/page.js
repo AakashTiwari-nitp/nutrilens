@@ -96,7 +96,7 @@ export default function HomePage() {
         setNewsError(null);
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || "localhost:5000/api/v1/news/get-news";
         const res = await fetch(`${baseUrl}/news/get-news`);
-        const data = await res.json();  
+        const data = await res.json();
         if (data.success && Array.isArray(data.data?.news)) {
           setNewsList(data.data.news);
           // set first as selected by default (optional)
@@ -148,9 +148,8 @@ export default function HomePage() {
           {images.map((img, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === current ? "opacity-100" : "opacity-0"
-              }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === current ? "opacity-100" : "opacity-0"
+                }`}
             >
               <Image
                 src={img}
@@ -169,9 +168,8 @@ export default function HomePage() {
         </h1>
 
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-12 transition-all duration-500 ${
-            showAll ? "max-h-[3000px]" : "max-h-[500px] overflow-hidden"
-          }`}
+          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-12 transition-all duration-500 ${showAll ? "max-h-[3000px]" : "max-h-[500px] overflow-hidden"
+            }`}
         >
           {displayedCategories.map((cat, index) => (
             <div
@@ -260,13 +258,24 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 🌈 GIF Section (Below Latest News) */}
-        <section className="relative w-full h-100 overflow-hidden mb-12">
-          <Image
-            src="/images/bg.gif"
-            alt="Healthy food background animation"
-            fill
-            className="object-cover"
+        {/* 🌈 Video Section (Below Latest News) */}
+        <section className="relative w-full h-[260px] sm:h-[340px] lg:h-[420px] overflow-hidden mb-12 rounded-2xl shadow-xl">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/videos/animated_video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+
+          {/* Optional overlay */}
+          <div
+            className={`absolute inset-0 ${theme === "dark" ? "bg-black/40" : "bg-black/10"
+              }`}
           />
         </section>
 

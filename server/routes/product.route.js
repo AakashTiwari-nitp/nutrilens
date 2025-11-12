@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct } from "../controllers/product.controller.js";
-import { getAllProducts, getProductById, getProductRatingByMLModel, registerProduct, updateProductDetails, updateProductImage } from "../controllers/product.controller.js";
+import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getProductRatingByMLModel } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
