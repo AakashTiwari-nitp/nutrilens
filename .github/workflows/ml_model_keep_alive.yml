@@ -1,0 +1,23 @@
+name: 🔄 Keep Render Model Backend Alive (NutriLens ml model)
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"  # every 15 minutes
+  workflow_dispatch:        # manual trigger allowed
+
+jobs:
+  ping-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🌐 Ping Render backend
+        run: |
+          url="https://nutrilens-model.onrender.com/health"
+          echo "Pinging $url"
+          status=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "$url" || echo "000")
+          echo "HTTP status: $status"
+          if [ "$status" = "200" ]; then
+            echo "✅ Backend is awake and responding."
+          else
+            echo "❌ Unexpected status code or request failed: $status"
+            exit 1
+          fi
