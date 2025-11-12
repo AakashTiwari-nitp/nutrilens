@@ -24,6 +24,8 @@ export default function EditProfilePage() {
     height: "",
     gender: null,
     isVeg: null,
+    companyRegistrationNo: "",
+    gstNo: "",
   });
 
   useEffect(() => {
@@ -45,6 +47,8 @@ export default function EditProfilePage() {
         height: user.height ?? "",
         gender: user.gender ?? null,
         isVeg: user.isVeg ?? null,
+        companyRegistrationNo: user.companyRegistrationNo ?? "",
+        gstNo: user.gstNo ?? "",
       });
       // initialize preview from user avatar if available
       setPreviewAvatar(user?.avatar ?? null);
@@ -70,17 +74,28 @@ export default function EditProfilePage() {
     setSaving(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const role = user?.role;
       const payload = {
         fullName: form.fullName || undefined,
         mobile: form.mobile || undefined,
         address: form.address || undefined,
         country: form.country || undefined,
         dob: form.dob || undefined,
-        weight: form.weight === "" ? undefined : Number(form.weight),
-        height: form.height === "" ? undefined : Number(form.height),
-        gender: form.gender === null ? undefined : Boolean(form.gender),
-        isVeg: form.isVeg === null ? undefined : Boolean(form.isVeg),
       };
+      
+      // Only include user-specific fields for user role
+      if (role === "user") {
+        payload.weight = form.weight === "" ? undefined : Number(form.weight);
+        payload.height = form.height === "" ? undefined : Number(form.height);
+        payload.gender = form.gender === null ? undefined : Boolean(form.gender);
+        payload.isVeg = form.isVeg === null ? undefined : Boolean(form.isVeg);
+      }
+      
+      // Only include company-specific fields for company role
+      if (role === "company") {
+        payload.companyRegistrationNo = form.companyRegistrationNo || undefined;
+        payload.gstNo = form.gstNo || undefined;
+      }
       const resp = await fetch(`${apiUrl}/user/update-account`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -135,8 +150,10 @@ export default function EditProfilePage() {
     }
   };
 
+  const role = user?.role;
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Edit Profile</h1>
@@ -217,7 +234,9 @@ export default function EditProfilePage() {
             <div className="bg-gray-50 rounded-md p-4">
               <h2 className="text-sm font-semibold text-gray-700 mb-3">Account</h2>
               <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Full Name</label>
+                <label className="text-gray-500 text-sm">
+                  {role === "company" ? "Contact Person" : "Full Name"}
+                </label>
                 <input
                   type="text"
                   value={form.fullName}
@@ -245,92 +264,151 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-md p-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Personal</h2>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">DOB</label>
-                <input
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => handleChange("dob", e.target.value)}
-                  className="mt-1 border rounded px-3 py-2"
-                />
-              </div>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Gender</label>
-                <select
-                  value={form.gender === null ? "" : form.gender ? "male" : "female"}
-                  onChange={(e) =>
-                    handleChange("gender", e.target.value === "" ? null : e.target.value === "male")
-                  }
-                  className="mt-1 border rounded px-3 py-2"
-                >
-                  <option value="">—</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Vegetarian</label>
-                <select
-                  value={form.isVeg === null ? "" : form.isVeg ? "yes" : "no"}
-                  onChange={(e) =>
-                    handleChange("isVeg", e.target.value === "" ? null : e.target.value === "yes")
-                  }
-                  className="mt-1 border rounded px-3 py-2"
-                >
-                  <option value="">—</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
-              </div>
-            </div>
+            {role === "user" ? (
+              <>
+                <div className="bg-gray-50 rounded-md p-4">
+                  <h2 className="text-sm font-semibold text-gray-700 mb-3">Personal</h2>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">DOB</label>
+                    <input
+                      type="date"
+                      value={form.dob}
+                      onChange={(e) => handleChange("dob", e.target.value)}
+                      className="mt-1 border rounded px-3 py-2"
+                    />
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">Gender</label>
+                    <select
+                      value={form.gender === null ? "" : form.gender ? "male" : "female"}
+                      onChange={(e) =>
+                        handleChange("gender", e.target.value === "" ? null : e.target.value === "male")
+                      }
+                      className="mt-1 border rounded px-3 py-2"
+                    >
+                      <option value="">—</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">Vegetarian</label>
+                    <select
+                      value={form.isVeg === null ? "" : form.isVeg ? "yes" : "no"}
+                      onChange={(e) =>
+                        handleChange("isVeg", e.target.value === "" ? null : e.target.value === "yes")
+                      }
+                      className="mt-1 border rounded px-3 py-2"
+                    >
+                      <option value="">—</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                </div>
 
-            <div className="bg-gray-50 rounded-md p-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Contact</h2>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Address</label>
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
-                  className="mt-1 border rounded px-3 py-2"
-                />
-              </div>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Country</label>
-                <input
-                  type="text"
-                  value={form.country}
-                  onChange={(e) => handleChange("country", e.target.value)}
-                  className="mt-1 border rounded px-3 py-2"
-                />
-              </div>
-            </div>
+                <div className="bg-gray-50 rounded-md p-4">
+                  <h2 className="text-sm font-semibold text-gray-700 mb-3">Contact</h2>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">Address</label>
+                    <input
+                      type="text"
+                      value={form.address}
+                      onChange={(e) => handleChange("address", e.target.value)}
+                      className="mt-1 border rounded px-3 py-2"
+                    />
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">Country</label>
+                    <input
+                      type="text"
+                      value={form.country}
+                      onChange={(e) => handleChange("country", e.target.value)}
+                      className="mt-1 border rounded px-3 py-2"
+                    />
+                  </div>
+                </div>
 
-            <div className="bg-gray-50 rounded-md p-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Body Metrics</h2>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Weight (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={form.weight}
-                  onChange={(e) => handleChange("weight", e.target.value)}
-                  className="mt-1 border rounded px-3 py-2"
-                />
+                <div className="bg-gray-50 rounded-md p-4">
+                  <h2 className="text-sm font-semibold text-gray-700 mb-3">Body Metrics</h2>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={form.weight}
+                      onChange={(e) => handleChange("weight", e.target.value)}
+                      className="mt-1 border rounded px-3 py-2"
+                    />
+                  </div>
+                  <div className="flex flex-col py-2 border-b border-gray-100">
+                    <label className="text-gray-500 text-sm">Height (cm)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={form.height}
+                      onChange={(e) => handleChange("height", e.target.value)}
+                      className="mt-1 border rounded px-3 py-2"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="bg-gray-50 rounded-md p-4">
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">
+                  {role === "company" ? "Company Details" : "Admin Details"}
+                </h2>
+                <div className="flex flex-col py-2 border-b border-gray-100">
+                  <label className="text-gray-500 text-sm">DOB</label>
+                  <input
+                    type="date"
+                    value={form.dob}
+                    onChange={(e) => handleChange("dob", e.target.value)}
+                    className="mt-1 border rounded px-3 py-2"
+                  />
+                </div>
+                <div className="flex flex-col py-2 border-b border-gray-100">
+                  <label className="text-gray-500 text-sm">Address</label>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
+                    className="mt-1 border rounded px-3 py-2"
+                  />
+                </div>
+                <div className="flex flex-col py-2 border-b border-gray-100">
+                  <label className="text-gray-500 text-sm">Country</label>
+                  <input
+                    type="text"
+                    value={form.country}
+                    onChange={(e) => handleChange("country", e.target.value)}
+                    className="mt-1 border rounded px-3 py-2"
+                  />
+                </div>
+                {role === "company" && (
+                  <>
+                    <div className="flex flex-col py-2 border-b border-gray-100">
+                      <label className="text-gray-500 text-sm">Company Registration No</label>
+                      <input
+                        type="text"
+                        value={form.companyRegistrationNo}
+                        onChange={(e) => handleChange("companyRegistrationNo", e.target.value)}
+                        className="mt-1 border rounded px-3 py-2"
+                      />
+                    </div>
+                    <div className="flex flex-col py-2 border-b border-gray-100">
+                      <label className="text-gray-500 text-sm">GST No</label>
+                      <input
+                        type="text"
+                        value={form.gstNo}
+                        onChange={(e) => handleChange("gstNo", e.target.value)}
+                        className="mt-1 border rounded px-3 py-2"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="flex flex-col py-2 border-b border-gray-100">
-                <label className="text-gray-500 text-sm">Height (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={form.height}
-                  onChange={(e) => handleChange("height", e.target.value)}
-                  className="mt-1 border rounded px-3 py-2"
-                />
-              </div>
-            </div>
+            )}
 
             <div className="sm:col-span-2 flex justify-end">
               <button

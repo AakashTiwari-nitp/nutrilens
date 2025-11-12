@@ -94,7 +94,19 @@ const userSchema = new Schema(
         news: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: "News",
-        }]
+        }],
+        companyRegistrationNo: {
+            type: String,
+            trim: true,
+        },
+        gstNo: {
+            type: String,
+            trim: true,
+        },
+        verificationRequested: {
+            type: Boolean,
+            default: false,
+        }
     }, { timestamps: true, }
 );
 

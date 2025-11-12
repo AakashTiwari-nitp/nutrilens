@@ -324,7 +324,9 @@ export const updateUserAccountDetails = asyncHandler(async (req, res, next) => {
         weight,
         height,
         gender,
-        isVeg
+        isVeg,
+        companyRegistrationNo,
+        gstNo
     } = req.body || {};
 
     let newWeight, newHeight, bmi;
@@ -337,24 +339,32 @@ export const updateUserAccountDetails = asyncHandler(async (req, res, next) => {
         bmi = user.bmi;
     }
 
+    const updateData = {
+        fullName: fullName || user.fullName,
+        email: email || user.email,
+        mobile: mobile || user.mobile,
+        address: address || user.address,
+        country: country || user.country,
+        dob: dob || user.dob,
+        weight: newWeight,
+        height: newHeight,
+        bmi: bmi || user.bmi,
+        gender: gender || user.gender,
+        isVeg: isVeg !== undefined ? isVeg : user.isVeg,
+    };
+
+    // Add company-specific fields if provided
+    if (companyRegistrationNo !== undefined) {
+        updateData.companyRegistrationNo = companyRegistrationNo;
+    }
+    if (gstNo !== undefined) {
+        updateData.gstNo = gstNo;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
         userId,
-        {
-            $set: {
-                fullName: fullName || user.fullName,
-                email: email || user.email,
-                mobile: mobile || user.mobile,
-                address: address || user.address,
-                country: country || user.country,
-                dob: dob || user.dob,
-                weight: newWeight,
-                height: newHeight,
-                bmi: bmi || user.bmi,
-                gender: gender || user.gender,
-                isVeg: isVeg !== undefined ? isVeg : user.isVeg,
-            }
-        }
-        , { new: true }
+        { $set: updateData },
+        { new: true }
     ).select("-password -refreshToken");
 
     return res.status(200).json(
@@ -418,6 +428,183 @@ export const getAllProductsOfTheCompany = asyncHandler(async (req, res, next) =>
                 products,
             },
             "Products fetched successfully"
+        )
+    );
+});
+
+// Request verification (Company only)
+export const requestVerification = asyncHandler(async (req, res, next) => {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (user.role !== "company") {
+        throw new ApiError(403, "Only companies can request verification");
+    }
+
+    if (user.accountStatus === "verified") {
+        throw new ApiError(400, "Company is already verified");
+    }
+
+    if (user.verificationRequested) {
+        throw new ApiError(400, "Verification request already pending");
+    }
+
+    user.verificationRequested = true;
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {},
+            "Verification request submitted successfully"
+        )
+    );
+});
+
+// Get pending verification requests (Admin only)
+export const getPendingVerificationRequests = asyncHandler(async (req, res, next) => {
+    const adminId = req.user._id;
+    const admin = await User.findById(adminId);
+
+    if (!admin || admin.role !== "admin") {
+        throw new ApiError(403, "Only admins can access this endpoint");
+    }
+
+    const pendingRequests = await User.find({
+        role: "company",
+        verificationRequested: true,
+        accountStatus: { $ne: "verified" }
+    })
+        .select("-password -refreshToken")
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { requests: pendingRequests },
+            "Pending verification requests fetched successfully"
+        )
+    );
+});
+
+// Approve or deny verification request (Admin only)
+export const handleVerificationRequest = asyncHandler(async (req, res, next) => {
+    const adminId = req.user._id;
+    const admin = await User.findById(adminId);
+
+    if (!admin || admin.role !== "admin") {
+        throw new ApiError(403, "Only admins can handle verification requests");
+    }
+
+    const { companyId, action } = req.body; // action: "approve" or "deny"
+
+    if (!companyId || !action) {
+        throw new ApiError(400, "Company ID and action are required");
+    }
+
+    if (action !== "approve" && action !== "deny") {
+        throw new ApiError(400, "Action must be 'approve' or 'deny'");
+    }
+
+    const company = await User.findById(companyId);
+
+    if (!company || company.role !== "company") {
+        throw new ApiError(404, "Company not found");
+    }
+
+    if (!company.verificationRequested) {
+        throw new ApiError(400, "No pending verification request for this company");
+    }
+
+    if (action === "approve") {
+        company.accountStatus = "verified";
+        company.verificationRequested = false;
+        await company.save();
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                { company },
+                "Company verified successfully"
+            )
+        );
+    } else {
+        // Deny - just reset the verification request
+        company.verificationRequested = false;
+        await company.save();
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                {},
+                "Verification request denied"
+            )
+        );
+    }
+});
+
+// Get all verified companies (Admin only)
+export const getVerifiedCompanies = asyncHandler(async (req, res, next) => {
+    const adminId = req.user._id;
+    const admin = await User.findById(adminId);
+
+    if (!admin || admin.role !== "admin") {
+        throw new ApiError(403, "Only admins can access this endpoint");
+    }
+
+    const verifiedCompanies = await User.find({
+        role: "company",
+        accountStatus: "verified"
+    })
+        .select("-password -refreshToken")
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { companies: verifiedCompanies },
+            "Verified companies fetched successfully"
+        )
+    );
+});
+
+// Remove company verification (Admin only)
+export const removeCompanyVerification = asyncHandler(async (req, res, next) => {
+    const adminId = req.user._id;
+    const admin = await User.findById(adminId);
+
+    if (!admin || admin.role !== "admin") {
+        throw new ApiError(403, "Only admins can remove company verification");
+    }
+
+    const { companyId } = req.body;
+
+    if (!companyId) {
+        throw new ApiError(400, "Company ID is required");
+    }
+
+    const company = await User.findById(companyId);
+
+    if (!company || company.role !== "company") {
+        throw new ApiError(404, "Company not found");
+    }
+
+    if (company.accountStatus !== "verified") {
+        throw new ApiError(400, "Company is not verified");
+    }
+
+    company.accountStatus = "pending";
+    await company.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { company },
+            "Company verification removed successfully"
         )
     );
 });

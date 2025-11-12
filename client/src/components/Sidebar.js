@@ -6,7 +6,7 @@ import Image from "next/image";
 
 import { ThemeContext } from "../context/ThemeContext";
 import { AuthContext } from "../context/AuthContext";
-import { FaBars, FaTimes, FaChevronDown, FaChevronUp, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaChevronDown, FaChevronUp, FaUser, FaSignOutAlt, FaShieldAlt } from "react-icons/fa";
 import navItems from "./NavItems.js";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
@@ -175,6 +175,31 @@ const Sidebar = () => {
                   )}
                 </li>
               ))}
+              {/* Admin-only verification link */}
+              {user?.role === "admin" && (
+                <>
+                  <li>
+                    <Link
+                      href="/admin/verification"
+                      className="flex items-center gap-2 p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
+                      onClick={closeSidebar}
+                    >
+                      <FaShieldAlt size={18} />
+                      Verification List
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/admin/company-verification"
+                      className="flex items-center gap-2 p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
+                      onClick={closeSidebar}
+                    >
+                      <FaShieldAlt size={18} />
+                      Company List
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </nav>
 

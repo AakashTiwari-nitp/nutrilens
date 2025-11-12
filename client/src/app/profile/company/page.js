@@ -16,9 +16,11 @@ function InfoRow({ label, value }) {
 
 export default function CompanyProfilePage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useContext(AuthContext);
+  const { user, loading, isAuthenticated, login } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
   const [prodLoading, setProdLoading] = useState(true);
+  const [requesting, setRequesting] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || !user)) {
@@ -57,18 +59,83 @@ export default function CompanyProfilePage() {
     }
   }, [user]);
 
+  const handleRequestVerification = async () => {
+    if (user?.accountStatus === "verified") {
+      setMessage({ type: "error", text: "Company is already verified" });
+      return;
+    }
+    if (user?.verificationRequested) {
+      setMessage({ type: "error", text: "Verification request already pending" });
+      return;
+    }
+
+    setRequesting(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const resp = await fetch(`${apiUrl}/user/request-verification`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await resp.json();
+      if (resp.ok && data?.success) {
+        setMessage({ type: "success", text: "Verification request submitted successfully" });
+        // Refresh user data
+        const profileResp = await fetch(`${apiUrl}/user/profile`, {
+          credentials: "include",
+        });
+        if (profileResp.ok) {
+          const profileData = await profileResp.json();
+          if (profileData?.data?.user) {
+            login(profileData.data.user);
+          }
+        }
+      } else {
+        setMessage({ type: "error", text: data?.message || "Failed to submit verification request" });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "Failed to submit verification request" });
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-gray-50 text-gray-900 md:ml-48">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Company Profile</h1>
-        <div className="mb-4">
+        <div className="mb-4 flex gap-2">
           <button
             onClick={() => router.push("/profile/edit")}
             className="text-sm px-4 py-2 border rounded-md hover:bg-gray-50"
           >
             Edit Profile
           </button>
+          {user?.accountStatus !== "verified" && !user?.verificationRequested && (
+            <button
+              onClick={handleRequestVerification}
+              disabled={requesting}
+              className="text-sm px-4 py-2 bg-black text-white rounded-md hover:bg-gray-600 disabled:opacity-50"
+            >
+              {requesting ? "Submitting..." : "Request Verification"}
+            </button>
+          )}
+          {user?.verificationRequested && (
+            <button
+              disabled
+              className="text-sm px-4 py-2 bg-yellow-500 text-white rounded-md opacity-75 cursor-not-allowed"
+            >
+              Verification Requested
+            </button>
+          )}
         </div>
+        {message.text && (
+          <div className={`mb-4 p-3 rounded-md ${
+            message.type === "success" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+          }`}>
+            {message.text}
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex items-center gap-4 mb-6">
@@ -92,16 +159,17 @@ export default function CompanyProfilePage() {
                 <InfoRow label="Role" value={user?.role} />
                 <InfoRow label="Email" value={user?.email} />
                 <InfoRow label="Mobile" value={user?.mobile} />
-                <InfoRow label="Account Status" value={user?.accountStatus} />
+                <InfoRow label="Account Status" value={user?.accountStatus}/>
               </div>
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-700 mb-3">Company Details</h2>
               <div className="bg-gray-50 rounded-md p-4">
-                <InfoRow label="Contact Person" value={user?.fullName} />
-                <InfoRow label="DOB" value={dobText} />
+                <InfoRow label="Company Name" value={user?.fullName} />
                 <InfoRow label="Address" value={user?.address} />
                 <InfoRow label="Country" value={user?.country} />
+                <InfoRow label="Company Registration No" value={user?.companyRegistrationNo} />
+                <InfoRow label="GST No" value={user?.gstNo} />
               </div>
             </div>
           </div>
