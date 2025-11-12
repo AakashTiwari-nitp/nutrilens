@@ -6,6 +6,23 @@ import { User } from "../models/user.model.js";
 import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from "../utils/ImageKit.js";
 import { getUserById, getUserDetailsById } from "./user.controller.js";
 
+
+const product = await Product.create({
+    name,
+    category,
+    productId,
+    description,
+    nutritionalInfo: JSON.parse(nutritionalInfo),
+    ingredients: JSON.parse(ingredients),
+    manufacturingDate,
+    expiryDate,
+    price,
+    tags: tags ? JSON.parse(tags) : [],
+    productImage: productImage.url,
+    companyId: user._id,
+    isApproved: false, // Products need admin approval
+});
+
 export const getProductById = asyncHandler(async (req, res, next) => {
     // console.log("Fetching product by ID", req.params.productId);
     const { productId } = req.params;
