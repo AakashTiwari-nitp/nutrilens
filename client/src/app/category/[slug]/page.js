@@ -12,26 +12,25 @@ export default function CategoryPage() {
   const pathname = usePathname();
   const category = pathname.split("/").pop();
 
-  // Demo items data - Replace this with actual API call later
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(category);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
 
   const categories = [
-    { name: "Biscuits", value: "biscuits", img: "/images/biscuit.jpg" },
-    { name: "Breakfast & Spreads", value: "breakfast-and-spreads", img: "/images/bread.jpg" },
-    { name: "Chocolates & Desserts", value: "chocolates-and-desserts", img: "/images/chocolate.jpg" },
-    { name: "Cold Drinks & Juices", value: "cold-drinks-and-juices", img: "/images/colddrinks.jpg" },
-    { name: "Dairy, Bread & Eggs", value: "dairy-bread-and-eggs", img: "/images/dairy.jpg" },
-    { name: "Instant Foods", value: "instant-foods", img: "/images/instant.jpg" },
-    { name: "Snacks", value: "snacks", img: "/images/snacks.jpg" },
-    { name: "Cakes & Bakes", value: "cakes-and-bakes", img: "/images/bread.jpg" },
-    { name: "Dry Fruits, Oil & Masalas", value: "dry-fruits-oil-and-masalas", img: "/images/dryfruits.jpg" },
-    { name: "Meat", value: "meat", img: "/images/meat.jpg" },
-    { name: "Rice, Atta & Dals", value: "rice-atta-and-dals", img: "/images/rice.jpg" },
-    { name: "Tea, Coffee & More", value: "tea-coffee-and-more", img: "/images/coffee.jpg" },
-    { name: "Supplements & Mores", value: "supplements-and-mores", img: "/images/protein.jpg" },
+    { name: "Biscuits", value: "biscuits", dbValue: "biscuits" },
+    { name: "Breakfast & Spreads", value: "breakfast-and-spreads", dbValue: "breakfast and spreads" },
+    { name: "Chocolates & Desserts", value: "chocolates-and-desserts", dbValue: "chocolates and desserts" },
+    { name: "Cold Drinks & Juices", value: "cold-drinks-and-juices", dbValue: "cold drinks and juices" },
+    { name: "Dairy, Bread & Eggs", value: "dairy-bread-and-eggs", dbValue: "dairy, bread and eggs" },
+    { name: "Instant Foods", value: "instant-foods", dbValue: "instant foods" },
+    { name: "Snacks", value: "snacks", dbValue: "snacks" },
+    { name: "Cakes & Bakes", value: "cakes-and-bakes", dbValue: "cakes and bakes" },
+    { name: "Dry Fruits, Oil & Masalas", value: "dry-fruits-oil-and-masalas", dbValue: "dry fruits, oil and masalas" },
+    { name: "Meat", value: "meat", dbValue: "meat" },
+    { name: "Rice, Atta & Dals", value: "rice-atta-and-dals", dbValue: "rice, atta and dals" },
+    { name: "Tea, Coffee & More", value: "tea-coffee-and-more", dbValue: "tea, coffee and more" },
+    { name: "Supplements & Mores", value: "supplements-and-mores", dbValue: "supplements and mores" },
   ];
 
   const [loading, setLoading] = useState(true);
@@ -43,40 +42,30 @@ export default function CategoryPage() {
         setLoading(true);
         setError(null);
         
-        // Get base URL from environment variable
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
         const apiUrl = `${baseUrl}/product/get-products`;
-        
-        // console.log('Fetching from:', apiUrl); // Debug log
         
         const response = await fetch(apiUrl);
         const data = await response.json();
         
-        // console.log('API Response:', data); // Debug log
-        // console.log('Selected Category:', selectedCategory); // Debug log
-        
         if (data.success) {
-          // Extract products from the correct path in the response
           const products = data.data.products || [];
           
-          // Filter products for the current category
+          // Find the category mapping
+          const categoryMapping = categories.find(cat => cat.value === selectedCategory);
+          const dbCategoryValue = categoryMapping?.dbValue || selectedCategory.replace(/-/g, " ").toLowerCase().trim();
+          
+          // Filter products for the current category - exact match with database value
           const filteredProducts = products.filter(product => {
-            const productCategory = product.category?.toLowerCase().trim() || '';
-            const selectedCat = selectedCategory.replace(/-/g, " ").toLowerCase().trim();
+            const productCategory = (product.category || '').toLowerCase().trim();
+            const targetCategory = dbCategoryValue.toLowerCase().trim();
             
-            // console.log('Comparing:', {
-            //   product: product.name,
-            //   productCategory,
-            //   selectedCategory: selectedCat,
-            //   isApproved: product.isApproved
-            // });
-            
-            return productCategory === selectedCat;
+            // Also check if product is approved (double check)
+            return productCategory === targetCategory && product.isApproved === true;
           });
           
-          // console.log('Filtered Products:', filteredProducts); // Debug log
           setItems(filteredProducts);
-          setCurrentPage(1); // Reset to first page when category changes
+          setCurrentPage(1);
         } else {
           setError(data.message || "Failed to fetch products");
         }
@@ -94,13 +83,19 @@ export default function CategoryPage() {
 
     fetchProducts();
     
-    // Cleanup function
     return () => {
       setItems([]);
       setLoading(false);
       setError(null);
     };
   }, [selectedCategory]);
+
+  // Update selectedCategory when pathname changes
+  useEffect(() => {
+    if (category) {
+      setSelectedCategory(category);
+    }
+  }, [category]);
 
   // Pagination calculations
   const totalPages = Math.ceil(items.length / itemsPerPage);
@@ -128,19 +123,19 @@ export default function CategoryPage() {
 
         {loading && (
           <div className="flex justify-center items-center min-h-[200px]">
-            <div className="text-black text-lg">Loading products...</div>
+            <div className="text-black dark:text-white text-lg">Loading products...</div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg mb-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg mb-4">
             <p className="font-semibold">Error loading products:</p>
             <p>{error}</p>
           </div>
         )}
 
         {!loading && !error && items.length === 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-600 p-4 rounded-lg">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400 p-4 rounded-lg">
             No approved products found in this category.
           </div>
         )}
@@ -168,7 +163,7 @@ export default function CategoryPage() {
                 </Button>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-gray-800 dark:text-white">
                     Page {currentPage} of {totalPages}
                   </span>
                 </div>

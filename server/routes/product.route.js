@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getPendingProductApprovals, handleProductApproval, getApprovedProducts, removeProductApproval } from "../controllers/product.controller.js";
-import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getProductRatingByMLModel } from "../controllers/product.controller.js";
+import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getPendingProductApprovals, handleProductApproval, getApprovedProducts, removeProductApproval,getProductRatingByMLModel, markDenialNotificationViewed } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -18,8 +17,10 @@ router.route("/update-image/:productId").patch(
     updateProductImage
 )
 
+// Add upload middleware - make it optional by using upload.single
 router.route("/update-product/:productId").patch(
     authenticateUser,
+    upload.single("productImage"), // Add this line
     updateProductDetails
 )
 
@@ -35,6 +36,7 @@ router.route("/approved-products").get(authenticateUser, getApprovedProducts);
 router.route("/remove-approval").post(authenticateUser, removeProductApproval);
 
 router.get("/get-products", getAllProducts);
+router.post("/mark-denial-viewed", authenticateUser, markDenialNotificationViewed);
 
 router.route("/:productId").get(getProductById);
 export default router;

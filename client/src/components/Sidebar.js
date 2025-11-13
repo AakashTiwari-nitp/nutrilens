@@ -176,7 +176,7 @@ const Sidebar = () => {
                 </li>
               ))}
               {/* Admin-only approval link */}
-              {user?.role === "admin" && (
+              {user?.role === "admin" && user?.accountStatus === "approved" && (
                 <>
                   <li>
                     <Link
@@ -195,7 +195,7 @@ const Sidebar = () => {
                       onClick={closeSidebar}
                     >
                       <FaShieldAlt size={18} />
-                      Approved Companies
+                      Approved List
                     </Link>
                   </li>
                 </>

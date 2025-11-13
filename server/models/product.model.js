@@ -83,6 +83,18 @@ const productSchema = new Schema(
             type: Boolean,
             default: false,
         },
+        isDenied: {
+            type: Boolean,
+            default: false,
+        },
+        denialReason: {
+            type: String,
+            trim: true,
+        },
+        denialNotificationViewed: {
+            type: Boolean,
+            default: false,
+        },
         tags: [{
             type: String,
             enum: ['vegan', 'vegetarian', 'gluten-free', 'sugar-free', 'low-fat', 'organic', 'non-GMO', 'high-protein', 'keto-friendly', 'paleo-friendly', 'dairy-free', 'nut-free', 'soy-free'],

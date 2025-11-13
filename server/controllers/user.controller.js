@@ -4,6 +4,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { deleteFromImageKit, getFileIdFromUrl, uploadAvatarOnImageKit } from "../utils/ImageKit.js";
 import jwt from "jsonwebtoken";
+import { Product } from "../models/product.model.js";
 
 export const getUserById = asyncHandler(async (req, res, next) => {
     console.log(req.params);
@@ -413,13 +414,10 @@ export const changePassword = asyncHandler(async (req, res, next) => {
 export const getAllProductsOfTheCompany = asyncHandler(async (req, res, next) => {
     const userId = req.user._id;
 
-    const user = await User.findById(userId)
-        .select("-password -refreshToken")
-        .populate('products', 'name category description productId price productImage isApproved');
-
-    // console.log(user)
-
-    const products = user.products || [];
+    // Get ALL products created by this company (approved, pending, denied)
+    const products = await Product.find({ companyId: userId })
+        .select('name category description productId price productImage isApproved approvalRequested isDenied denialReason denialNotificationViewed createdAt')
+        .sort({ createdAt: -1 });
 
     return res.status(200).json(
         new ApiResponse(

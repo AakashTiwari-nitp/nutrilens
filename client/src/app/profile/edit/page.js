@@ -278,7 +278,7 @@ export default function EditProfilePage() {
                 type="submit"
                 disabled={saving}
                 className={`px-5 py-2 rounded-md disabled:opacity-50 ${
-                  theme === "dark" ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-black hover:bg-gray-700 text-white"
+                  theme === "dark" ? "bg-black hover:bg-gray-600 text-white" : "bg-black hover:bg-gray-700 text-white"
                 }`}
               >
                 {saving ? "Saving..." : "Save Changes"}
