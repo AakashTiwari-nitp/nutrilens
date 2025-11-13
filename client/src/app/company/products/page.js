@@ -162,7 +162,7 @@ export default function CompanyProductsPage() {
   const bg = theme === "dark" ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900";
   const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
   const borderColor = theme === "dark" ? "border-gray-700" : "border-gray-200";
-  const buttonPrimary = theme === "dark" ? "bg-blue-700 hover:bg-blue-600" : "bg-blue-600 hover:bg-blue-700";
+  const buttonPrimary = theme === "dark" ? "bg-blue-700 hover:bg-gray-600" : "bg-black hover:bg-gray-600";
   const buttonDanger = theme === "dark" ? "bg-red-700 hover:bg-red-600" : "bg-red-600 hover:bg-red-700";
 
   const categories = [

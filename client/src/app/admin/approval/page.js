@@ -13,30 +13,41 @@ export default function AdminApprovalPage() {
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [selectedType, setSelectedType] = useState("company"); // 'company' or 'product'
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || !user || user.role !== "admin")) {
+    if (!loading && (!isAuthenticated || !user || user.role !== "admin" || user.accountStatus !== "approved")) {
       router.replace("/auth/login?message=Admin access required");
     }
   }, [loading, isAuthenticated, user, router]);
 
   useEffect(() => {
     if (user?.role === "admin") {
-      loadRequests();
+      loadRequests(selectedType);
     }
-  }, [user]);
+  }, [user, selectedType]);
 
   const loadRequests = async () => {
     try {
       setLoadingRequests(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const resp = await fetch(`${apiUrl}/user/pending-approvals`, {
-        method: "GET",
-        credentials: "include",
-      });
+      let resp;
+      if (selectedType === "company") {
+        resp = await fetch(`${apiUrl}/user/pending-approvals`, {
+          method: "GET",
+          credentials: "include",
+        });
+      } else {
+        // product pending approvals
+        resp = await fetch(`${apiUrl}/product/pending-approvals`, {
+          method: "GET",
+          credentials: "include",
+        });
+      }
       const data = await resp.json();
       if (resp.ok && data?.success) {
-        setRequests(data?.data?.requests || []);
+        // products endpoint returns requests array as well
+        setRequests(data?.data?.requests || data?.data?.products || []);
       } else {
         setError(data?.message || "Failed to load requests");
       }
@@ -47,20 +58,31 @@ export default function AdminApprovalPage() {
     }
   };
 
-  const handleApproval = async (companyId, action) => {
+  const handleApproval = async (id, action) => {
     try {
       setError("");
       setSuccess("");
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const resp = await fetch(`${apiUrl}/user/handle-approval`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ companyId, action }),
-      });
+      let resp;
+      if (selectedType === "company") {
+        resp = await fetch(`${apiUrl}/user/handle-approval`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ companyId: id, action }),
+        });
+      } else {
+        // product approval
+        resp = await fetch(`${apiUrl}/product/handle-approval`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ productId: id, action }),
+        });
+      }
       const data = await resp.json();
       if (resp.ok && data?.success) {
-        setSuccess(action === "approve" ? "Company approved successfully" : "Approval request denied");
+        setSuccess(action === "approve" ? (selectedType === "company" ? "Company approved successfully" : "Product approved successfully") : "Approval request denied");
         await loadRequests();
       } else {
         setError(data?.message || `Failed to ${action} approval`);
@@ -70,7 +92,7 @@ export default function AdminApprovalPage() {
     }
   };
 
-  if (!loading && (!isAuthenticated || !user || user.role !== "admin")) {
+  if (!loading && (!isAuthenticated || !user || user.role !== "admin" || user.accountStatus !== "approved")) {
     return null;
   }
 
@@ -83,7 +105,21 @@ export default function AdminApprovalPage() {
     <div className={`min-h-screen ${bg} ${textColor} md:ml-48 transition-colors duration-300`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Company Approval Requests</h1>
+          <h1 className="text-2xl font-bold">{selectedType === "company" ? "Company Approval Requests" : "Product Approval Requests"}</h1>
+          <div className="ml-4 flex items-center gap-2">
+            <button
+              onClick={() => setSelectedType("company")}
+              className={`px-3 py-1 rounded-md font-medium ${selectedType === "company" ? "bg-black text-white hover:bg-gray-600" : "bg-transparent text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700"}`}
+            >
+              Company
+            </button>
+            <button
+              onClick={() => setSelectedType("product")}
+              className={`px-3 py-1 rounded-md font-medium ${selectedType === "product" ? "bg-black text-white hover:bg-gray-600" : "bg-transparent text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700"}`}
+            >
+              Product
+            </button>
+          </div>
         </div>
 
         {(error || success) && (

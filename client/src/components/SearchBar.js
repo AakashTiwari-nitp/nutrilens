@@ -19,7 +19,7 @@ const SearchBar = () => {
           transition
         "
       />
-      <button className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-blue-500 hover:bg-blue-600 text-white transition shadow-md">
+      <button className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 bg-blue-500 hover:bg-gray-600 text-white transition shadow-md">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5"

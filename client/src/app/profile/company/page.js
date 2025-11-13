@@ -130,7 +130,7 @@ export default function CompanyProfilePage() {
               disabled={requesting}
               className={`text-sm px-4 py-2 rounded-md transition ${
                 theme === "dark"
-                  ? "bg-blue-600 text-white hover:bg-blue-500"
+                  ? "bg-black text-white hover:bg-gray-600"
                   : "bg-black text-white hover:bg-gray-700"
               } disabled:opacity-50`}
             >

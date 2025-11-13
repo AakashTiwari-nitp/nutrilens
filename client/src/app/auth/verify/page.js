@@ -107,7 +107,7 @@ export default function VerifyPage() {
           <div className="flex justify-end">
             <button
               onClick={() => router.push("/profile")}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-black text-white rounded hover:bg-gray-600 transition-colors"
             >
               Go to profile
             </button>
@@ -136,7 +136,7 @@ export default function VerifyPage() {
               className={`flex-1 px-4 py-2 rounded text-sm text-white ${
                 sending || cooldown > 0
                   ? "opacity-60 cursor-not-allowed bg-gray-600"
-                  : "bg-blue-600 hover:bg-blue-700"
+                  : "bg-black hover:bg-gray-600"
               }`}
             >
               {sending ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown}s` : "Send OTP"}
@@ -164,7 +164,7 @@ export default function VerifyPage() {
                 type="submit"
                 disabled={verifying || !sent}
                 className={`px-4 py-2 rounded text-sm text-white ${
-                  verifying ? "bg-blue-500 opacity-60 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                  verifying ? "bg-blue-500 opacity-60 cursor-not-allowed" : "bg-black hover:bg-gray-600"
                 }`}
               >
                 {verifying ? "Verifying..." : "Verify OTP"}

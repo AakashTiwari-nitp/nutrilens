@@ -179,8 +179,8 @@ export default function ContactPage() {
                 w-full py-3 mt-2 rounded-xl text-lg font-bold
                 transition transform hover:scale-105 hover:shadow-xl
                 ${theme === "dark"
-                  ? "bg-blue-600 text-white hover:bg-blue-500"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
+                  ? "bg-black text-white hover:bg-gray-600"
+                  : "bg-blue-500 text-white hover:bg-gray-600"
                 }
                 ${(!scriptAvailable || error) ? "opacity-60 cursor-not-allowed" : ""}
               `}
