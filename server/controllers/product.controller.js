@@ -135,7 +135,7 @@ export const getPendingProductApprovals = asyncHandler(async (req, res, next) =>
         approvalRequested: true,
         isApproved: false
     })
-        .populate('companyId', 'fullName username email')
+        .populate('companyId', 'fullName username email companyRegistrationNo')
         .sort({ createdAt: -1 });
 
     return res.status(200).json(

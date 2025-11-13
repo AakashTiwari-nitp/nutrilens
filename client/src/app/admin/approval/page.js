@@ -141,54 +141,99 @@ export default function AdminApprovalPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {requests.map((company) => (
+            {requests.map((item) => (
               <div
-                key={company._id}
+                key={item._id}
                 className={`${cardBg} rounded-lg shadow p-6 transition-colors duration-300`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <img
-                      src={company.avatar || "/images/nutrilens_logo.png"}
-                      alt={company.fullName}
-                      className="w-16 h-16 rounded-full object-cover border"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold">{company.fullName || company.username}</h3>
-                        <span className={`text-sm ${subText}`}>@{company.username}</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <Info label="Email" value={company.email} subText={subText} />
-                        <Info label="Mobile" value={company.mobile} subText={subText} />
-                        <Info label="Company Registration No" value={company.companyRegistrationNo} subText={subText} />
-                        <Info label="GST No" value={company.gstNo} subText={subText} />
-                        <Info label="Address" value={company.address} subText={subText} />
-                        <Info label="Country" value={company.country} subText={subText} />
-                        <Info label="Account Status" value={company.accountStatus || "pending"} subText={subText} />
-                        <Info
-                          label="Request Date"
-                          value={company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "—"}
-                          subText={subText}
-                        />
+                {selectedType === "company" ? (
+                  // Company approval display (existing code)
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      <img
+                        src={item.avatar || "/images/nutrilens_logo.png"}
+                        alt={item.fullName}
+                        className="w-16 h-16 rounded-full object-cover border"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold">{item.fullName || item.username}</h3>
+                          <span className={`text-sm ${subText}`}>@{item.username}</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <Info label="Email" value={item.email} subText={subText} />
+                          <Info label="Mobile" value={item.mobile} subText={subText} />
+                          <Info label="Company Registration No" value={item.companyRegistrationNo} subText={subText} />
+                          <Info label="GST No" value={item.gstNo} subText={subText} />
+                          <Info label="Address" value={item.address} subText={subText} />
+                          <Info label="Country" value={item.country} subText={subText} />
+                          <Info label="Account Status" value={item.accountStatus || "pending"} subText={subText} />
+                          <Info
+                            label="Request Date"
+                            value={item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}
+                            subText={subText}
+                          />
+                        </div>
                       </div>
                     </div>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => handleApproval(item._id, "approve")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleApproval(item._id, "deny")}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                      >
+                        Deny
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={() => handleApproval(company._id, "approve")}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleApproval(company._id, "deny")}
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                    >
-                      Deny
-                    </button>
+                ) : (
+                  // Product approval display (NEW)
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      <img
+                        src={item.productImage || "/images/nutrilens_logo.png"}
+                        alt={item.name}
+                        className="w-24 h-24 object-cover rounded-md border"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold">{item.name}</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <Info label="Product ID" value={item.productId} subText={subText} />
+                          <Info label="Price" value={`₹${item.price}`} subText={subText} />
+                          <Info label="Category" value={item.category} subText={subText} />
+                          <Info label="Company Name" value={item.companyId?.fullName || "—"} subText={subText} />
+                          <Info label="Company Registration No" value={item.companyId?.companyRegistrationNo || "—"} subText={subText} />
+                          <Info
+                            label="Request Date"
+                            value={item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}
+                            subText={subText}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => handleApproval(item._id, "approve")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleApproval(item._id, "deny")}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                      >
+                        Deny
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
