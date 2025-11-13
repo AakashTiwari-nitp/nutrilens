@@ -17,8 +17,10 @@ router.route("/update-image/:productId").patch(
     updateProductImage
 )
 
+// Add upload middleware - make it optional by using upload.single
 router.route("/update-product/:productId").patch(
     authenticateUser,
+    upload.single("productImage"), // Add this line
     updateProductDetails
 )
 

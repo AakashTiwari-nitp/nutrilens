@@ -383,76 +383,145 @@ export const deleteProduct = asyncHandler(async (req, res, next) => {
 });
 
 export const updateProductDetails = asyncHandler(async (req, res, next) => {
-    const { productId } = req.params;
+    try {
+        const { productId } = req.params;
 
-    const product = await getProductDetailsByProductId(productId);
+        if (!productId) {
+            throw new ApiError(400, "Product ID is required");
+        }
 
-    const user = req.user;
+        const product = await getProductDetailsByProductId(productId);
 
-    if (user.role !== 'company' || user.accountStatus !== 'approved') {
-        throw new ApiError(403, "Only approved companies can update product details");
-    }
+        if (!product) {
+            throw new ApiError(404, "Product not found");
+        }
 
-    if (product.companyId.toString() !== user._id.toString()) {
-        throw new ApiError(403, "You are not authorized to update this product details");
-    }
+        const user = req.user;
 
-    const {
-        name,
-        description,
-        category,
-        nutritionalInfo,
-        diseases,
-        certifications,
-        alternatives,
-        ingredients,
-        price,
-        tags,
-    } = req.body;
+        if (!user) {
+            throw new ApiError(401, "User not authenticated");
+        }
 
-    const safeParse = (value, fieldName) => {
-        if (value === undefined) return undefined;
-        if (typeof value === 'string') {
+        if (user.role !== 'company' || user.accountStatus !== 'verified') {
+            throw new ApiError(403, "Only verified companies can update product details");
+        }
+
+        if (product.companyId.toString() !== user._id.toString()) {
+            throw new ApiError(403, "You are not authorized to update this product details");
+        }
+
+        // Extract fields from req.body (FormData fields come as strings)
+        const {
+            name,
+            description,
+            category,
+            nutritionalInfo,
+            ingredients,
+            price,
+            manufacturingDate,
+            expiryDate,
+            tags,
+        } = req.body;
+
+        // Validate required fields
+        if (!name || !category || !nutritionalInfo || !description || !ingredients || !manufacturingDate || !expiryDate || !price) {
+            throw new ApiError(400, "Please provide all required fields");
+        }
+
+        // Handle image upload if new image is provided
+        let productImageUrl = product.productImage;
+        if (req.file?.path) {
             try {
-                return JSON.parse(value);
-            } catch (err) {
-                throw new ApiError(400, `Invalid JSON for field '${fieldName}'`);
+                const oldImageFileId = await getFileIdFromUrl(product.productImage);
+                const productImage = await uploadProductOnImageKit(req.file.path, product.productId || productId);
+                
+                if (!productImage || productImage.error) {
+                    throw new ApiError(500, "Failed to upload product image");
+                }
+                
+                productImageUrl = productImage.url;
+                
+                // Delete old image
+                if (oldImageFileId) {
+                    await deleteFromImageKit(oldImageFileId);
+                }
+            } catch (imageError) {
+                console.error("Image upload error:", imageError);
+                // Continue with existing image if upload fails
             }
         }
-        return value;
-    };
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-        product._id,
-        {
-            $set: {
-                name: name ?? product.name,
-                description: description ?? product.description,
-                category: category ?? product.category,
-                nutritionalInfo: safeParse(nutritionalInfo, 'nutritionalInfo') ?? product.nutritionalInfo,
-                diseases: safeParse(diseases, 'diseases') ?? product.diseases,
-                certifications: safeParse(certifications, 'certifications') ?? product.certifications,
-                alternatives: safeParse(alternatives, 'alternatives') ?? product.alternatives,
-                ingredients: safeParse(ingredients, 'ingredients') ?? product.ingredients,
-                price: price ?? product.price,
-                tags: safeParse(tags, 'tags') ?? product.tags,
-            }
-        },
-        { new: true }
-    );
+        // Parse JSON fields
+        let parsedNutritionalInfo, parsedIngredients, parsedTags;
+        
+        try {
+            parsedNutritionalInfo = typeof nutritionalInfo === 'string' ? JSON.parse(nutritionalInfo) : nutritionalInfo;
+            parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients;
+            parsedTags = tags ? (typeof tags === 'string' ? JSON.parse(tags) : tags) : [];
+        } catch (parseError) {
+            throw new ApiError(400, `Invalid JSON format: ${parseError.message}`);
+        }
 
-    return res.status(200).json(
-        new ApiResponse(
-            200,
+        // Validate parsed data
+        if (!parsedNutritionalInfo || typeof parsedNutritionalInfo !== 'object') {
+            throw new ApiError(400, "Invalid nutritional information format");
+        }
+
+        if (!Array.isArray(parsedIngredients) || parsedIngredients.length === 0) {
+            throw new ApiError(400, "Ingredients must be a non-empty array");
+        }
+
+        // Update product and set to pending approval
+        const updatedProduct = await Product.findByIdAndUpdate(
+            product._id,
             {
-                updatedProduct,
+                $set: {
+                    name: name.trim(),
+                    description: description.trim(),
+                    category: category.trim(),
+                    nutritionalInfo: parsedNutritionalInfo,
+                    ingredients: parsedIngredients,
+                    price: parseFloat(price),
+                    manufacturingDate: new Date(manufacturingDate),
+                    expiryDate: new Date(expiryDate),
+                    tags: parsedTags || [],
+                    productImage: productImageUrl,
+                    // Reset approval status - requires re-approval
+                    isApproved: false,
+                    approvalRequested: true,
+                    isDenied: false,
+                    denialReason: undefined,
+                    denialNotificationViewed: false,
+                }
             },
-            "Product details updated successfully"
-        )
-    );
+            { new: true }
+        );
 
-    
+        if (!updatedProduct) {
+            throw new ApiError(500, "Failed to update product");
+        }
 
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                {
+                    updatedProduct,
+                },
+                "Product updated successfully. Changes require admin approval."
+            )
+        );
+    } catch (error) {
+        // Log the error for debugging
+        console.error("Update product error:", error);
+        
+        // If it's already an ApiError, pass it through
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        
+        // Otherwise, wrap it in an ApiError
+        throw new ApiError(500, error.message || "Failed to update product");
+    }
 });
 
 export const getProductRatingByMLModel = asyncHandler(async (req, res, next) => {
