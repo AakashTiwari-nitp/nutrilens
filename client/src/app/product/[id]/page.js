@@ -18,6 +18,29 @@ export default function ProductDetailsPage() {
   const textColor = theme === "dark" ? "text-white" : "text-gray-900";
   const subText = theme === "dark" ? "text-gray-300" : "text-gray-600";
 
+  // Helper function to format nutritional info keys
+  const formatNutritionKey = (key) => {
+    // Extract unit suffix
+    let unit = '';
+    let label = key;
+
+    if (key.endsWith('_g')) {
+      unit = ' (g)';
+      label = key.slice(0, -2);
+    } else if (key.endsWith('_mg')) {
+      unit = ' (mg)';
+      label = key.slice(0, -3);
+    }
+
+    // Replace underscores with spaces and capitalize each word
+    label = label
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return label + unit;
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -59,14 +82,14 @@ export default function ProductDetailsPage() {
         <div className={`${cardBg} rounded-xl shadow-lg overflow-hidden transition-colors duration-300`}>
           {/* Product Header */}
           <div className="p-8">
-            <Link href={`/category/${product.category}`} className="text-blue-600 hover:underline mb-4 block">
+            <Link href={`/category/${product.category.toLowerCase().replace(/\s+/g, '-')}`} className="text-blue-600 hover:underline dark:text-blue-300 mb-4 block">
               ← Back to {product.category}
             </Link>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Product Image */}
               <div className="relative h-96 rounded-lg overflow-hidden">
-                <Image 
-                  src={product.productImage} 
+                <Image
+                  src={product.productImage}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -82,10 +105,10 @@ export default function ProductDetailsPage() {
                   {product.description}
                 </p>
                 <div className="space-y-4">
-                  <p className="text-2xl font-bold text-blue-600">₹{product.price}</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-300">₹{product.price}</p>
                   <div className="flex gap-2">
                     {product.tags.map((tag) => (
-                      <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm">
                         {tag}
                       </span>
                     ))}
@@ -93,9 +116,6 @@ export default function ProductDetailsPage() {
                   <div>
                     <p className={`text-sm ${subText} transition-colors duration-300`}>
                       Product ID: {product.productId}
-                    </p>
-                    <p className={`text-sm ${subText} transition-colors duration-300`}>
-                      Expiry: {new Date(product.expiryDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -105,11 +125,11 @@ export default function ProductDetailsPage() {
 
           {/* Nutritional Info */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-8">
-            <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Nutritional Information</h2>
+            <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Nutritional Information</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
               {Object.entries(product.nutritionalInfo).map(([key, value]) => (
-                <div key={key} className={`${theme === "dark" ? "bg-gray-700" : "bg-gray-50"} p-4 rounded-lg text-center transition-colors duration-300`}>
-                  <p className={`${subText} capitalize transition-colors duration-300`}>{key}</p>
+                <div key={key} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center transition-colors duration-300">
+                  <p className={`${subText} transition-colors duration-300`}>{formatNutritionKey(key)}</p>
                   <p className={`font-bold ${textColor} transition-colors duration-300`}>{value}</p>
                 </div>
               ))}
@@ -118,10 +138,10 @@ export default function ProductDetailsPage() {
 
           {/* Ingredients */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-8">
-            <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Ingredients</h2>
+            <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Ingredients</h2>
             <div className="flex flex-wrap gap-2">
               {product.ingredients.map((ingredient, index) => (
-                <span key={index} className={`px-3 py-1 ${theme === "dark" ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"} rounded-full text-sm transition-colors duration-300`}>
+                <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm transition-colors duration-300">
                   {ingredient}
                 </span>
               ))}
@@ -131,19 +151,17 @@ export default function ProductDetailsPage() {
           {/* Additional Information */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h2 className="text-2xl font-bold mb-4">Product Details</h2>
+              <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Product Details</h2>
               <div className="space-y-2">
-                <p><span className="font-semibold">Manufacturing Date:</span> {new Date(product.manufacturingDate).toLocaleDateString()}</p>
-                <p><span className="font-semibold">Expiry Date:</span> {new Date(product.expiryDate).toLocaleDateString()}</p>
-                <p><span className="font-semibold">Rating:</span> {product.publicRating} ⭐</p>
+                <p className={`${subText} transition-colors duration-300`}><span className="font-semibold">Rating:</span> {product.publicRating} ⭐</p>
               </div>
             </div>
             {product.certifications.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold mb-4">Certifications</h2>
+                <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Certifications</h2>
                 <div className="flex flex-wrap gap-2">
                   {product.certifications.map((cert, index) => (
-                    <span key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <span key={index} className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm">
                       {cert}
                     </span>
                   ))}
