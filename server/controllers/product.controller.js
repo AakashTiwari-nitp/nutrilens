@@ -695,11 +695,11 @@ export const getProductPublicRating = asyncHandler(async (req, res, next) => {
                 const user = await getUserDetailsById(decoded?._id);
                 if (user) userId = user._id;
             } catch (e) {
-                // invalid token or user not found — ignore silently
+                console.error('JWT verification failed:', e.message || e);
             }
         }
 
-        console.log('User ID for rating lookup:', userId);
+        // console.log('User ID for rating lookup:', userId);
         if (userId) {
             const r = await RatingModel.findOne({ product: product._id, ratedBy: userId }).select('rating').lean();
             if (r && typeof r.rating !== 'undefined' && r.rating !== null) {

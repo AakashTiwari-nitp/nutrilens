@@ -22,6 +22,7 @@ export default function ProductDetailsPage() {
   const [userRating, setUserRating] = useState(null);
   const [ratingLoading, setRatingLoading] = useState(false);
   const [ratingError, setRatingError] = useState(null);
+  const [qrDataUrl, setQrDataUrl] = useState(null);
 
   const bg = theme === "dark" ? "bg-gray-900" : "bg-gray-100";
   const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
@@ -80,16 +81,16 @@ export default function ProductDetailsPage() {
   };
 
   // Single star that supports fractional fill (fill: 0..1)
-  const Star = ({ fill = 0, size = 24, className = '' }) => {
+  const Star = ({ fill = 0, sizeClass = 'text-2xl', className = '' }) => {
     const pct = Math.max(0, Math.min(1, Number(fill))) * 100;
     return (
-      <span className={`relative inline-block ${className}`} style={{ width: size, height: size }}>
-        <span className="text-gray-300 dark:text-gray-600">
-          <AiFillStar size={size} />
+      <span className={`relative inline-block align-middle ${className}`}>
+        <span className={`text-gray-300 dark:text-gray-600 ${sizeClass}`}>
+          <AiFillStar />
         </span>
         <span className="absolute top-0 left-0 overflow-hidden" style={{ width: `${pct}%`, height: '100%' }}>
-          <span className="text-yellow-400">
-            <AiFillStar size={size} />
+          <span className={`text-yellow-400 ${sizeClass}`}>
+            <AiFillStar />
           </span>
         </span>
       </span>
@@ -108,6 +109,8 @@ export default function ProductDetailsPage() {
           setProduct(data.data.product);
           // fetch public rating after product is loaded
           fetchPublicRating();
+          // generate QR code for this product page (client-side only)
+          generateQrCode();
         } else {
           setError(data.message || "Failed to fetch product details");
         }
@@ -120,6 +123,24 @@ export default function ProductDetailsPage() {
 
     fetchProduct();
   }, [productId]);
+
+  // Generate QR code for current product URL using 'qrcode' package dynamically
+  const generateQrCode = async () => {
+    try {
+      // build absolute URL for this product page
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = `${origin}/product/${productId}`;
+
+      // dynamic import to avoid bundling on server
+      const QRCode = await import('qrcode');
+      const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2 });
+      setQrDataUrl(dataUrl);
+    } catch (err) {
+      // library may be missing in dev — log and continue
+      console.error('Failed to generate QR code (install `qrcode`):', err);
+      setQrDataUrl(null);
+    }
+  };
 
   // Fetch public rating and current user's rating (if any)
   const fetchPublicRating = async () => {
@@ -202,7 +223,7 @@ export default function ProductDetailsPage() {
             </Link>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Product Image */}
-              <div className="relative h-96 rounded-lg overflow-hidden">
+              <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
                 <Image
                   src={product.productImage}
                   alt={product.name}
@@ -233,17 +254,25 @@ export default function ProductDetailsPage() {
                       Product ID: {product.productId}
                     </p>
                   </div>
+                  {/* QR Code */}
+                  <div className="mt-2 justify-center flex items-center gap-3">
+                    {/* Inline small QR preview (normal view) */}
+                    {qrDataUrl && (
+                      <img src={qrDataUrl} alt="Product QR" className="w-30 lg:w-48 h-30 lg:h-48 rounded-md border" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Nutritional Info */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-8">
+          {/* On small screens make this panel scrollable with a reasonable max height; on md+ allow natural height */}
+          <div className="border-t border-gray-200 dark:border-gray-700 p-8 max-h-96 md:max-h-none overflow-y-auto md:overflow-visible">
             <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Nutritional Information</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
               {Object.entries(product.nutritionalInfo).map(([key, value]) => (
-                <div key={key} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center transition-colors duration-300">
+                <div key={key} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center transition-colors duration-300 wrap-break-word">
                   <p className={`${subText} transition-colors duration-300`}>{formatNutritionKey(key)}</p>
                   <p className={`font-bold ${textColor} transition-colors duration-300`}>{value}</p>
                 </div>
@@ -276,7 +305,7 @@ export default function ProductDetailsPage() {
                         {[1, 2, 3, 4, 5].map((i) => {
                           const diff = Number(publicRating.averageRating) - (i - 1);
                           const fill = Math.max(0, Math.min(1, diff));
-                          return <Star key={`pub-${i}`} fill={fill} size={20} />;
+                          return <Star key={`pub-${i}`} fill={fill} sizeClass="text-base md:text-lg" />;
                         })}
                         <span className="ml-1">{publicRating.averageRating.toFixed(2)}</span>
                       </span>
@@ -327,7 +356,7 @@ export default function ProductDetailsPage() {
                             className="p-0 bg-transparent border-0"
                             title={isAuthenticated ? `Rate ${i} star(s)` : 'Login to submit a rating'}
                           >
-                            <Star fill={fill} size={24} />
+                            <Star fill={fill} sizeClass="text-xl md:text-2xl" />
                           </button>
                         );
                       })}
