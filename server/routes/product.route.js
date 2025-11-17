@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getPendingProductApprovals, handleProductApproval, getApprovedProducts, removeProductApproval,getProductRatingByMLModel, markDenialNotificationViewed } from "../controllers/product.controller.js";
+import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getPendingProductApprovals, handleProductApproval, getApprovedProducts, removeProductApproval, getProductRatingByMLModel, markDenialNotificationViewed, getProductPublicRating, rateProduct } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -37,6 +37,12 @@ router.route("/remove-approval").post(authenticateUser, removeProductApproval);
 
 router.get("/get-products", getAllProducts);
 router.post("/mark-denial-viewed", authenticateUser, markDenialNotificationViewed);
+
+// Public endpoint to fetch public rating and optionally the current user's rating
+router.get("/:productId/public-rating", getProductPublicRating);
+
+// Submit or update current user's rating for a product (authenticated)
+router.post("/:productId/rate", authenticateUser, rateProduct);
 
 router.route("/:productId").get(getProductById);
 export default router;

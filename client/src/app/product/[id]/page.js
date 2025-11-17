@@ -1,17 +1,27 @@
 "use client";
 import { useState, useEffect, useContext } from 'react';
 import { ThemeContext } from '@/context/ThemeContext';
+import { AuthContext } from '@/context/AuthContext';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AiFillStar } from 'react-icons/ai';
 
 export default function ProductDetailsPage() {
   const { theme } = useContext(ThemeContext);
   const pathname = usePathname();
+  const router = useRouter();
   const productId = pathname.split("/").pop();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user, isAuthenticated } = useContext(AuthContext);
+
+  // Rating states
+  const [publicRating, setPublicRating] = useState({ averageRating: 0, numberOfRatings: 0 });
+  const [userRating, setUserRating] = useState(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingError, setRatingError] = useState(null);
 
   const bg = theme === "dark" ? "bg-gray-900" : "bg-gray-100";
   const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
@@ -41,6 +51,51 @@ export default function ProductDetailsPage() {
     return label + unit;
   };
 
+  // Fractional star display for average ratings (uses two-layer technique)
+  const FractionalStars = ({ value = 0, size = 20 }) => {
+    const clamped = Math.max(0, Math.min(5, Number(value) || 0));
+    const percent = (clamped / 5) * 100;
+
+    const stars = [1, 2, 3, 4, 5];
+
+    return (
+      <div className="relative inline-block" style={{ fontSize: size }} aria-hidden>
+        {/* Gray (background) stars */}
+        <div className="text-gray-300 dark:text-gray-600">
+          {stars.map((s) => (
+            <AiFillStar key={`bg-${s}`} />
+          ))}
+        </div>
+
+        {/* Colored overlay clipped to percentage */}
+        <div className="absolute top-0 left-0 overflow-hidden" style={{ width: `${percent}%`, whiteSpace: 'nowrap' }}>
+          <div className="text-yellow-400">
+            {stars.map((s) => (
+              <AiFillStar key={`fg-${s}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Single star that supports fractional fill (fill: 0..1)
+  const Star = ({ fill = 0, size = 24, className = '' }) => {
+    const pct = Math.max(0, Math.min(1, Number(fill))) * 100;
+    return (
+      <span className={`relative inline-block ${className}`} style={{ width: size, height: size }}>
+        <span className="text-gray-300 dark:text-gray-600">
+          <AiFillStar size={size} />
+        </span>
+        <span className="absolute top-0 left-0 overflow-hidden" style={{ width: `${pct}%`, height: '100%' }}>
+          <span className="text-yellow-400">
+            <AiFillStar size={size} />
+          </span>
+        </span>
+      </span>
+    );
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -51,6 +106,8 @@ export default function ProductDetailsPage() {
 
         if (data.success) {
           setProduct(data.data.product);
+          // fetch public rating after product is loaded
+          fetchPublicRating();
         } else {
           setError(data.message || "Failed to fetch product details");
         }
@@ -63,6 +120,64 @@ export default function ProductDetailsPage() {
 
     fetchProduct();
   }, [productId]);
+
+  // Fetch public rating and current user's rating (if any)
+  const fetchPublicRating = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const resp = await fetch(`${baseUrl}/product/${productId}/public-rating`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (!resp.ok) return;
+      const json = await resp.json();
+      if (json.success) {
+        setPublicRating(json.data.publicRating || { averageRating: 0, numberOfRatings: 0 });
+        if (typeof json.data.userRating !== 'undefined' && json.data.userRating !== null) {
+          setUserRating(Number(json.data.userRating));
+        }
+      }
+      // console.log('Fetched public rating', json);
+    } catch (err) {
+      console.error('Failed to fetch public rating', err);
+    }
+  };
+
+  // Submit or update rating
+  const handleRate = async (ratingValue) => {
+    if (!isAuthenticated) {
+      // Could navigate to login; for now show a message
+      setRatingError('Please login to submit a rating');
+      return;
+    }
+
+    setRatingLoading(true);
+    setRatingError(null);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const resp = await fetch(`${baseUrl}/product/${productId}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ rating: ratingValue }),
+      });
+
+      const json = await resp.json();
+      if (!resp.ok) {
+        setRatingError(json.message || 'Failed to submit rating');
+      } else {
+        // Update UI from response
+        if (json.data?.publicRating) setPublicRating(json.data.publicRating);
+        if (typeof json.data?.userRating !== 'undefined') setUserRating(Number(json.data.userRating));
+      }
+    } catch (err) {
+      console.error('Rate submit error', err);
+      setRatingError('Failed to submit rating');
+    } finally {
+      setRatingLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -153,7 +268,76 @@ export default function ProductDetailsPage() {
             <div>
               <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Product Details</h2>
               <div className="space-y-2">
-                <p className={`${subText} transition-colors duration-300`}><span className="font-semibold">Rating:</span> {product.publicRating} ⭐</p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <span className="font-semibold mr-2">Public Rating:</span>
+                    <span className={`text-lg font-bold ${textColor} flex items-center gap-2`}>
+                      <span className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((i) => {
+                          const diff = Number(publicRating.averageRating) - (i - 1);
+                          const fill = Math.max(0, Math.min(1, diff));
+                          return <Star key={`pub-${i}`} fill={fill} size={20} />;
+                        })}
+                        <span className="ml-1">{publicRating.averageRating.toFixed(2)}</span>
+                      </span>
+                    </span>
+                    <span className={`ml-2 text-sm ${subText}`}>({publicRating.numberOfRatings} ratings)</span>
+                  </div>
+                </div>
+
+                {/* Star rating input (visible for all users) */}
+                {
+                  isAuthenticated && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="font-semibold mr-2">Your Rating:</span>
+                      {[1, 2, 3, 4, 5].map((i) => {
+                        // Determine per-star fractional fill. If userRating exists use it (may be fractional),
+                        // otherwise use publicRating.averageRating.
+                        const sourceRating = (typeof userRating === 'number') ? Number(userRating) : Number(publicRating.averageRating || 0);
+                        const diff = sourceRating - (i - 1);
+                        const fill = Math.max(0, Math.min(1, diff));
+
+                        // click handler that supports fractional selection within a star (rounded to 0.5)
+                        const onStarClick = (e) => {
+                          // If not authenticated, redirect to login preserving return path
+                          if (!isAuthenticated) {
+                            router.push(`/auth/login?redirect=/product/${productId}`);
+                            return;
+                          }
+
+                          // Determine click position to compute fractional value
+                          const target = e.currentTarget;
+                          const rect = target.getBoundingClientRect();
+                          const clickX = e.clientX - rect.left; // px
+                          const frac = Math.max(0, Math.min(1, clickX / rect.width));
+                          let value = (i - 1) + frac; // 0..5
+                          // Round to nearest 0.5
+                          value = Math.round(value * 2) / 2;
+                          // clamp between 1 and 5
+                          value = Math.max(1, Math.min(5, value));
+                          handleRate(value);
+                        };
+
+                        return (
+                          <button
+                            key={i}
+                            aria-label={`Rate ${i} stars`}
+                            onClick={onStarClick}
+                            disabled={ratingLoading}
+                            className="p-0 bg-transparent border-0"
+                            title={isAuthenticated ? `Rate ${i} star(s)` : 'Login to submit a rating'}
+                          >
+                            <Star fill={fill} size={24} />
+                          </button>
+                        );
+                      })}
+                      {ratingLoading && <span className="text-sm ml-2">Submitting...</span>}
+                    </div>
+                  )
+                }
+
+                {ratingError && <div className="text-sm text-red-600 mt-1">{ratingError}</div>}
+                {(!isAuthenticated) && <div className="text-sm text-gray-500 mt-1">Login to submit your rating.</div>}
               </div>
             </div>
             {product.certifications.length > 0 && (
@@ -171,6 +355,6 @@ export default function ProductDetailsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

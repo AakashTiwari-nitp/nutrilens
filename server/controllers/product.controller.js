@@ -1,10 +1,12 @@
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
+import jwt from 'jsonwebtoken';
 import asyncHandler from "../utils/asyncHandler.js";
 import { Product } from "../models/product.model.js";
 import { User } from "../models/user.model.js";
 import { deleteFromImageKit, getFileIdFromUrl, uploadProductOnImageKit } from "../utils/ImageKit.js";
 import { getUserById, getUserDetailsById } from "./user.controller.js";
+import { RatingModel } from "../models/ratingModel.js";
 
 
 export const getProductById = asyncHandler(async (req, res, next) => {
@@ -26,7 +28,7 @@ export const getProductById = asyncHandler(async (req, res, next) => {
 
 export const getAllProducts = asyncHandler(async (req, res, next) => {
     // Only get approved products that are not denied
-    const products = await Product.find({ 
+    const products = await Product.find({
         isApproved: true,
         isDenied: { $ne: true } // Explicitly exclude denied products
     })
@@ -434,13 +436,13 @@ export const updateProductDetails = asyncHandler(async (req, res, next) => {
             try {
                 const oldImageFileId = await getFileIdFromUrl(product.productImage);
                 const productImage = await uploadProductOnImageKit(req.file.path, product.productId || productId);
-                
+
                 if (!productImage || productImage.error) {
                     throw new ApiError(500, "Failed to upload product image");
                 }
-                
+
                 productImageUrl = productImage.url;
-                
+
                 // Delete old image
                 if (oldImageFileId) {
                     await deleteFromImageKit(oldImageFileId);
@@ -453,7 +455,7 @@ export const updateProductDetails = asyncHandler(async (req, res, next) => {
 
         // Parse JSON fields
         let parsedNutritionalInfo, parsedIngredients, parsedTags;
-        
+
         try {
             parsedNutritionalInfo = typeof nutritionalInfo === 'string' ? JSON.parse(nutritionalInfo) : nutritionalInfo;
             parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients;
@@ -513,12 +515,12 @@ export const updateProductDetails = asyncHandler(async (req, res, next) => {
     } catch (error) {
         // Log the error for debugging
         console.error("Update product error:", error);
-        
+
         // If it's already an ApiError, pass it through
         if (error instanceof ApiError) {
             throw error;
         }
-        
+
         // Otherwise, wrap it in an ApiError
         throw new ApiError(500, error.message || "Failed to update product");
     }
@@ -591,5 +593,127 @@ export const markDenialNotificationViewed = asyncHandler(async (req, res, next) 
             { product },
             "Denial notification marked as viewed"
         )
+    );
+});
+
+export const rateProduct = asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+    const { rating } = req.body;
+
+    if (!productId) {
+        throw new ApiError(400, "Product ID is required");
+    }
+
+    const numericRating = Number(rating);
+    console.log('Received rating payload:', rating, 'type:', typeof rating, 'numericRating:', numericRating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+        throw new ApiError(400, "Rating must be a number between 1 and 5");
+    }
+
+    const product = await getProductDetailsByProductId(productId);
+
+    const userId = req.user?._id;
+    if (!userId) {
+        throw new ApiError(401, "User must be authenticated to rate products");
+    }
+
+    // Upsert user's rating for this product
+    const updatedRating = await RatingModel.findOneAndUpdate(
+        { product: product._id, ratedBy: userId },
+        { $set: { rating: numericRating } },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    // Recompute aggregated public rating
+    const agg = await RatingModel.aggregate([
+        { $match: { product: product._id } },
+        {
+            $group: {
+                _id: "$product",
+                averageRating: { $avg: "$rating" },
+                numberOfRatings: { $sum: 1 }
+            }
+        }
+    ]);
+
+    let publicRating = { averageRating: 0, numberOfRatings: 0 };
+    if (agg && agg.length > 0) {
+        publicRating.averageRating = Number(agg[0].averageRating) || 0;
+        publicRating.numberOfRatings = Number(agg[0].numberOfRatings) || 0;
+    }
+
+    // Persist aggregated rating on product as a small optimization (optional)
+    try {
+        // store only the numeric average on the product document to match schema
+        product.publicRating = publicRating.averageRating;
+        await product.save();
+    } catch (err) {
+        // Non-fatal: if update fails, continue and return computed value
+        console.error('Failed to persist product.publicRating:', err.message || err);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, { publicRating, userRating: Number(updatedRating.rating) }, 'Rating submitted successfully')
+    );
+});
+
+export const getProductPublicRating = asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+
+    const product = await getProductDetailsByProductId(productId);
+    // Compute public rating (average + count)
+    const agg = await RatingModel.aggregate([
+        { $match: { product: product._id } },
+        {
+            $group: {
+                _id: "$product",
+                averageRating: { $avg: "$rating" },
+                numberOfRatings: { $sum: 1 }
+            }
+        }
+    ]);
+
+    let publicRating = { averageRating: 0, numberOfRatings: 0 };
+    if (agg && agg.length > 0) {
+        publicRating.averageRating = Number(agg[0].averageRating) || 0;
+        publicRating.numberOfRatings = Number(agg[0].numberOfRatings) || 0;
+    } else if (product.publicRating && typeof product.publicRating === 'object') {
+        // fallback to stored product.publicRating if present
+        publicRating.averageRating = Number(product.publicRating.averageRating) || 0;
+        publicRating.numberOfRatings = Number(product.publicRating.numberOfRatings) || 0;
+    }
+
+    // Find current user's rating for this product (if token present). We support optional auth here
+    let userRating = null;
+    try {
+        // Try to extract JWT from cookies or Authorization header without requiring authentication middleware
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        let userId = null;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+                const user = await getUserDetailsById(decoded?._id);
+                if (user) userId = user._id;
+            } catch (e) {
+                // invalid token or user not found — ignore silently
+            }
+        }
+
+        console.log('User ID for rating lookup:', userId);
+        if (userId) {
+            const r = await RatingModel.findOne({ product: product._id, ratedBy: userId }).select('rating').lean();
+            if (r && typeof r.rating !== 'undefined' && r.rating !== null) {
+                userRating = Number(r.rating);
+            }
+        }
+        // console.log('User rating fetched:', userRating);
+        // console.log('Public rating computed:', publicRating);
+    } catch (err) {
+        // ignore user rating lookup errors, still return public rating
+        console.error('Error fetching user rating:', err.message || err);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, { publicRating, userRating }, 'Product rating fetched successfully')
     );
 });
