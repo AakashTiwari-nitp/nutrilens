@@ -717,3 +717,28 @@ export const getProductPublicRating = asyncHandler(async (req, res, next) => {
         new ApiResponse(200, { publicRating, userRating }, 'Product rating fetched successfully')
     );
 });
+
+// Get recommended products in same category with higher publicRating than the given product
+export const getProductRecommendations = asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+
+    const product = await getProductDetailsByProductId(productId);
+
+    // Use stored numeric publicRating on product if present, otherwise fallback to 0
+    const baseRating = Number(product.publicRating || 0);
+
+    // Find other approved products in same category with higher publicRating
+    const recommendations = await Product.find({
+        category: product.category,
+        isApproved: true,
+        isDenied: { $ne: true },
+        _id: { $ne: product._id },
+        publicRating: { $gt: baseRating }
+    })
+    .select('name productId price productImage publicRating tags companyId')
+    .sort({ publicRating: -1 })
+    .limit(10)
+    .lean();
+
+    return res.status(200).json(new ApiResponse(200, { recommendations }, 'Recommendations fetched successfully'));
+});

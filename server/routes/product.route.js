@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getPendingProductApprovals, handleProductApproval, getApprovedProducts, removeProductApproval, getProductRatingByMLModel, markDenialNotificationViewed, getProductPublicRating, rateProduct } from "../controllers/product.controller.js";
+import { getAllProducts, getProductById, registerProduct, updateProductDetails, updateProductImage, deleteProduct, getPendingProductApprovals, handleProductApproval, getApprovedProducts, removeProductApproval, getProductRatingByMLModel, markDenialNotificationViewed, getProductPublicRating, rateProduct, getProductRecommendations } from "../controllers/product.controller.js";
 import { authenticateUser } from "../middlewares/user.auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -43,6 +43,9 @@ router.get("/:productId/public-rating", getProductPublicRating);
 
 // Submit or update current user's rating for a product (authenticated)
 router.post("/:productId/rate", authenticateUser, rateProduct);
+
+// Recommendations: products in same category with higher publicRating
+router.get("/:productId/recommendations", getProductRecommendations);
 
 router.route("/:productId").get(getProductById);
 export default router;

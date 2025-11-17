@@ -23,6 +23,7 @@ export default function ProductDetailsPage() {
   const [ratingLoading, setRatingLoading] = useState(false);
   const [ratingError, setRatingError] = useState(null);
   const [qrDataUrl, setQrDataUrl] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
 
   const bg = theme === "dark" ? "bg-gray-900" : "bg-gray-100";
   const cardBg = theme === "dark" ? "bg-gray-800" : "bg-white";
@@ -50,34 +51,6 @@ export default function ProductDetailsPage() {
       .join(' ');
 
     return label + unit;
-  };
-
-  // Fractional star display for average ratings (uses two-layer technique)
-  const FractionalStars = ({ value = 0, size = 20 }) => {
-    const clamped = Math.max(0, Math.min(5, Number(value) || 0));
-    const percent = (clamped / 5) * 100;
-
-    const stars = [1, 2, 3, 4, 5];
-
-    return (
-      <div className="relative inline-block" style={{ fontSize: size }} aria-hidden>
-        {/* Gray (background) stars */}
-        <div className="text-gray-300 dark:text-gray-600">
-          {stars.map((s) => (
-            <AiFillStar key={`bg-${s}`} />
-          ))}
-        </div>
-
-        {/* Colored overlay clipped to percentage */}
-        <div className="absolute top-0 left-0 overflow-hidden" style={{ width: `${percent}%`, whiteSpace: 'nowrap' }}>
-          <div className="text-yellow-400">
-            {stars.map((s) => (
-              <AiFillStar key={`fg-${s}`} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
   };
 
   // Single star that supports fractional fill (fill: 0..1)
@@ -109,6 +82,8 @@ export default function ProductDetailsPage() {
           setProduct(data.data.product);
           // fetch public rating after product is loaded
           fetchPublicRating();
+          // fetch recommendations for this product
+          fetchRecommendations();
           // generate QR code for this product page (client-side only)
           generateQrCode();
         } else {
@@ -139,6 +114,22 @@ export default function ProductDetailsPage() {
       // library may be missing in dev — log and continue
       console.error('Failed to generate QR code (install `qrcode`):', err);
       setQrDataUrl(null);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const resp = await fetch(`${baseUrl}/product/${productId}/recommendations`, {
+        method: 'GET',
+      });
+      if (!resp.ok) return;
+      const json = await resp.json();
+      if (json.success) {
+        setRecommendations(json.data.recommendations || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recommendations', err);
     }
   };
 
@@ -368,20 +359,51 @@ export default function ProductDetailsPage() {
                 {ratingError && <div className="text-sm text-red-600 mt-1">{ratingError}</div>}
                 {(!isAuthenticated) && <div className="text-sm text-gray-500 mt-1">Login to submit your rating.</div>}
               </div>
+
             </div>
-            {product.certifications.length > 0 && (
-              <div>
-                <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Certifications</h2>
-                <div className="flex flex-wrap gap-2">
-                  {product.certifications.map((cert, index) => (
-                    <span key={index} className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm">
-                      {cert}
-                    </span>
+            {/* Recommendations: products in same category with higher public rating */}
+            <div className=" border-gray-200 dark:border-gray-700">
+              <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Recommended products</h2>
+              {recommendations.length === 0 ? (
+                <p className={`${subText}`}>No higher-rated products found in this category.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {recommendations.map((rec) => (
+                    <Link key={rec._id} href={`/product/${rec.productId}`} className={`block p-4 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-700 hover:shadow-md transition-shadow`}>
+                      <div className="relative h-40 w-full rounded-md overflow-hidden mb-3">
+                        <Image src={rec.productImage} alt={rec.name} fill className="object-cover" />
+                      </div>
+                      <div className="flex flex-col items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <h3 className={`font-semibold text-wrap ${textColor} truncate`}>{rec.name}</h3>
+                          <p className={`text-sm ${subText}`}>₹{rec.price}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((i) => {
+                            const diff = Number(rec.publicRating || 0) - (i - 1);
+                            const fill = Math.max(0, Math.min(1, diff));
+                            return <Star key={`r-${rec._id}-${i}`} fill={fill} sizeClass="text-base" />;
+                          })}
+                        </div>
+                      </div>
+                    </Link>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+          {product.certifications.length > 0 && (
+            <div>
+              <h2 className={`text-2xl font-bold mb-4 ${textColor} transition-colors duration-300`}>Certifications</h2>
+              <div className="flex flex-wrap gap-2">
+                {product.certifications.map((cert, index) => (
+                  <span key={index} className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm">
+                    {cert}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div >
